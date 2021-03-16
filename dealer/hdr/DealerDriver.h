@@ -7,7 +7,6 @@
     #include <cstring>
     #include <stdio.h>
     #include <inttypes.h>
-
 #endif
 
 #ifdef _OPENMP
