@@ -1,5 +1,6 @@
 #include "../hdr/DealerDriver.h"
 #include "../hdr/Environment.h"
+#include "../hdr/KeyGenerator.h"
 #include "../hdr/UtilityFunctions.h"
 
 constexpr unsigned int hash(const char *s, int off = 0) 
@@ -82,8 +83,11 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
 
 int main(int argc, char* argv[])
 {   
+    // Declare/Initalize key data structures for the application
     Environment* environment = new Environment();
+    KeyGenerator* key_gen;
 
+    // Depending of if a config file was provided to the application
     if (argc > 1)
     {
         if (!setup_env_with_conf(argv[argc-1], environment))
@@ -95,5 +99,17 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
     }
 
+    // NEEDS TO BE REMOVED IN FUTURE
+    if (environment->get_dist_mode() == 1)
+    {
+        std::cout << "Currently Unsupported" << std::endl;
+        return EXIT_FAILURE;
+    }
 
+    if (environment->get_dist_mode() == 0 || environment->get_dist_mode() == 1)
+        key_gen = new KeyGenerator(environment->get_dist_mode(), environment->get_ref_to_addresses());
+    else
+        return EXIT_FAILURE;
+
+    //key_gen->print_key_generator();
 }

@@ -2,11 +2,13 @@
     #define DEALER_DRIVER_H
     #include <iostream>
     #include <vector>
+    #include <unordered_map>
     #include <fstream>
     #include <algorithm>
     #include <cstring>
     #include <stdio.h>
     #include <inttypes.h>
+    #include <openssl/rand.h>
 #endif
 
 #ifdef _OPENMP
