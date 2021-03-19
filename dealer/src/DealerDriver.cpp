@@ -111,5 +111,5 @@ int main(int argc, char* argv[])
     else
         return EXIT_FAILURE;
 
-    //key_gen->print_key_generator();
+    key_gen->print_key_generator();
 }
