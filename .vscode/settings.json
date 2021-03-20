@@ -2,6 +2,8 @@
     "files.associations": {
         "*.cpp": "cpp",
         "vector": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "qbytearray": "cpp",
+        "qobject": "cpp"
     }
 }

@@ -9,6 +9,7 @@
     #include <stdio.h>
     #include <inttypes.h>
     #include <openssl/rand.h>
+    #include "Qt.h"
 #endif
 
 #ifdef _OPENMP
