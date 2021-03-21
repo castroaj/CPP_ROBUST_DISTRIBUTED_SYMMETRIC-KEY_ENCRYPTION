@@ -1,16 +1,16 @@
 #include "../hdr/KeyGenerator.h"
 
-KeyGenerator::KeyGenerator(unsigned int dist_mode, std::vector<std::string>* addresses)
+KeyGenerator::KeyGenerator(unsigned int dist_mode, QList<QString>* addresses)
 {
-    all_key_list = new std::vector<unsigned char*>();
-    omega_table = new std::unordered_map<std::string, std::vector<int>>();
-    key_table = new std::unordered_map<std::string, std::vector<unsigned char*>>();
+    all_key_list = new QList<unsigned char*>();
+    omega_table = new QMap<QString, QList<int>>();
+    key_table = new QMap<QString, QList<unsigned char*>>();
 
     switch (dist_mode)
     {
         case 0:
             {
-                key_count = 1307504;
+                key_count = 10;
                 key_size = 32;
                 create_all_key_list();
                 create_omega_table();
@@ -29,7 +29,20 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode, std::vector<std::string>* add
 
 KeyGenerator::~KeyGenerator()
 {
+    // Free memory for all-key list
+    for (int i = 0; i < all_key_list->size();i++)
+    {
+        free(all_key_list->at(i));
+    }
+    delete all_key_list;
 
+    // Free memory for omega table
+    omega_table->clear();
+    delete omega_table;
+
+    // Free memory for key table
+    key_table->clear();
+    delete key_table;
 }
 
 void KeyGenerator::print_key_generator()
@@ -41,7 +54,7 @@ void KeyGenerator::print_key_generator()
 
     cout << "All Keys: " << endl;
 
-    for (unsigned int i = 0; i < all_key_list->size(); i++)
+    for (int i = 0; i < all_key_list->size(); i++)
     {
         cout << "\t" << i << ": ";
 
@@ -64,9 +77,8 @@ void KeyGenerator::create_all_key_list()
         RAND_bytes(cur_key, key_size);
 
         #pragma omp critical
-        all_key_list->push_back(cur_key);
+        all_key_list->append(cur_key);
     }
-    std::cout << "DONE" << std::endl;
 }
 
 void KeyGenerator::create_omega_table()

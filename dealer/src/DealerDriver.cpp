@@ -1,7 +1,6 @@
 #include "../hdr/DealerDriver.h"
 #include "../hdr/Environment.h"
 #include "../hdr/KeyGenerator.h"
-#include "../hdr/UtilityFunctions.h"
 
 constexpr unsigned int hash(const char *s, int off = 0) 
 {                        
@@ -45,9 +44,17 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
                 case hash("IP_ADDRESSES"):
                     {
                         value = line.substr(delimPos + 1);
-                    
+
+                        QString qvalue = QString::fromUtf8(value.c_str());
+                        QStringList qstringlist = qvalue.split(QLatin1Char(','));
                         auto addresses = enviorment->get_ref_to_addresses();
-                        string_split(value, ",", addresses);
+
+                        for (int i = 0; i < qstringlist.size(); i++)
+                        {
+                            addresses->append(qstringlist.at(i));
+                        }
+                        
+                        //string_split(value, ",", addresses);
 
                         break;
                     }
@@ -60,16 +67,20 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
                         #ifdef _OPENMP
                             omp_set_num_threads(atoi(value.c_str()));
                         #endif
+                        break;
                     }
                 // Set distribution mode for the dealing process
                 case hash("DISTRIBUTION_MODE"):
                     {
                         value = line.substr(delimPos + 1);
                         enviorment->set_dist_mode(atoi(value.c_str()));
+                        break;
                     }
                 default:
-                    value = line.substr(delimPos + 1);
-                    break;
+                    {
+                        value = line.substr(delimPos + 1);
+                        break;
+                    }
             }
         }
         return true;
@@ -83,14 +94,33 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
 
 int main(int argc, char* argv[])
 {   
+    // Setup Networking Server
+    QCoreApplication app(argc, argv);
+    
+    QCommandLineParser parser;
+    QCommandLineOption dbgOption(QStringList() << "d" << "debug", QCoreApplication::translate("main", "Debug Output [default: off]."));
+    QCommandLineOption portOption(QStringList() << "p" << "port", QCoreApplication::translate("main", "Port for server [default: 1234]"), QCoreApplication::translate("main", "port"), QLatin1String("1234"));
+    QCommandLineOption configOption(QStringList() << "c" << "config", "Fullpath and extension of input <file>", "file");
+
+    parser.setApplicationDescription("Networking Setup");
+    parser.addHelpOption();
+    parser.addOption(dbgOption);
+    parser.addOption(portOption);
+    parser.addOption(configOption);
+    parser.process(app);
+
+    QString inputFileName = parser.value(configOption);
+    bool debug = parser.isSet(dbgOption);
+    int port = parser.value(portOption).toInt();
+
     // Declare/Initalize key data structures for the application
     Environment* environment = new Environment();
     KeyGenerator* key_gen;
 
     // Depending of if a config file was provided to the application
-    if (argc > 1)
+    if (!inputFileName.isEmpty())
     {
-        if (!setup_env_with_conf(argv[argc-1], environment))
+        if (!setup_env_with_conf(inputFileName.toStdString(), environment))
             return EXIT_FAILURE;
     }
     else
@@ -111,5 +141,10 @@ int main(int argc, char* argv[])
     else
         return EXIT_FAILURE;
 
-    key_gen->print_key_generator();
+
+    if (debug)
+    {
+        environment->print_environment();
+        key_gen->print_key_generator();
+    }
 }

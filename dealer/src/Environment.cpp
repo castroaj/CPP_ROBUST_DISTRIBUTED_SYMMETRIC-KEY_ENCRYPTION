@@ -2,7 +2,7 @@
 
 Environment::Environment()
 {
-    ip_addresses = new std::vector<std::string>();
+    ip_addresses = new QList<QString>();
     thread_count = 1;
     dist_mode = 0;
 }
@@ -20,6 +20,9 @@ void Environment::print_environment()
     cout << "Thread Count: " << thread_count << endl;
     cout << "Distribution mode: " << dist_mode << endl;
     
-    for (unsigned int i = 0; i < ip_addresses->size(); i++)
-        cout << "Address " << (i+1) << ": " << ip_addresses->at(i) << endl;
+    for (int i = 0; i < ip_addresses->size(); i++)
+    {
+        QString addr = ip_addresses->at(i).toLatin1();
+        cout << "Address " << (i+1) << ": " << addr.toLocal8Bit().data() << endl;
+    }
 }

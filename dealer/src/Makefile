@@ -54,12 +54,10 @@ OBJECTS_DIR   = ../bin/
 
 SOURCES       = DealerDriver.cpp \
 		Environment.cpp \
-		KeyGenerator.cpp \
-		UtilityFunctions.cpp 
+		KeyGenerator.cpp 
 OBJECTS       = ../bin/DealerDriver.o \
 		../bin/Environment.o \
-		../bin/KeyGenerator.o \
-		../bin/UtilityFunctions.o
+		../bin/KeyGenerator.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -137,11 +135,9 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		Dealer.pro ../hdr/DealerDriver.h \
 		../hdr/Environment.h \
 		../hdr/KeyGenerator.h \
-		../hdr/Qt.h \
-		../hdr/UtilityFunctions.h DealerDriver.cpp \
+		../hdr/Qt.h DealerDriver.cpp \
 		Environment.cpp \
-		KeyGenerator.cpp \
-		UtilityFunctions.cpp
+		KeyGenerator.cpp
 QMAKE_TARGET  = Dealer
 DESTDIR       = 
 TARGET        = Dealer
@@ -319,8 +315,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../hdr/DealerDriver.h ../hdr/Environment.h ../hdr/KeyGenerator.h ../hdr/Qt.h ../hdr/UtilityFunctions.h $(DISTDIR)/
-	$(COPY_FILE) --parents DealerDriver.cpp Environment.cpp KeyGenerator.cpp UtilityFunctions.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../hdr/DealerDriver.h ../hdr/Environment.h ../hdr/KeyGenerator.h ../hdr/Qt.h $(DISTDIR)/
+	$(COPY_FILE) --parents DealerDriver.cpp Environment.cpp KeyGenerator.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -371,8 +367,7 @@ compiler_clean: compiler_moc_predefs_clean
 ../bin/DealerDriver.o: DealerDriver.cpp ../hdr/DealerDriver.h \
 		../hdr/Qt.h \
 		../hdr/Environment.h \
-		../hdr/KeyGenerator.h \
-		../hdr/UtilityFunctions.h
+		../hdr/KeyGenerator.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerDriver.o DealerDriver.cpp
 
 ../bin/Environment.o: Environment.cpp ../hdr/Environment.h \
@@ -384,11 +379,6 @@ compiler_clean: compiler_moc_predefs_clean
 		../hdr/DealerDriver.h \
 		../hdr/Qt.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/KeyGenerator.o KeyGenerator.cpp
-
-../bin/UtilityFunctions.o: UtilityFunctions.cpp ../hdr/UtilityFunctions.h \
-		../hdr/DealerDriver.h \
-		../hdr/Qt.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/UtilityFunctions.o UtilityFunctions.cpp
 
 ####### Install
 

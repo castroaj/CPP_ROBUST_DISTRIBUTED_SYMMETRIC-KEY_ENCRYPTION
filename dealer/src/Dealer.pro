@@ -7,15 +7,15 @@ CONFIG += app_bundle
 SOURCES += \
     DealerDriver.cpp \
     Environment.cpp \
-    KeyGenerator.cpp \
-    UtilityFunctions.cpp
+    KeyGenerator.cpp 
+    
 
 HEADERS += \
     ../hdr/DealerDriver.h \
     ../hdr/Environment.h \
     ../hdr/KeyGenerator.h \
-    ../hdr/Qt.h \
-    ../hdr/UtilityFunctions.h
+    ../hdr/Qt.h 
+    
 
 QMAKE_CXXFLAGS += -fopenmp
 QMAKE_CXXFLAGS += -lcrypto
