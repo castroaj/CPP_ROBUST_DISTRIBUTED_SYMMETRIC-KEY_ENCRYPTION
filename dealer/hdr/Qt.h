@@ -8,4 +8,7 @@
     #include <QtCore/QByteArray>
     #include <QtCore/QMap>
     #include <QtCore/QString>
+    #include <QtCore/QDebug>
+    #include <QtWebSockets/qwebsocketserver.h>
+    #include <QtWebSockets/qwebsocket.h>
 #endif 

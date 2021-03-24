@@ -3,7 +3,7 @@
     #include "DealerDriver.h"
 
     QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
-    QT_FORWARD_DECLARD_CLASS(QWebSocket)
+    QT_FORWARD_DECLARE_CLASS(QWebSocket)
 
     class DealerServer : public QObject
     {
