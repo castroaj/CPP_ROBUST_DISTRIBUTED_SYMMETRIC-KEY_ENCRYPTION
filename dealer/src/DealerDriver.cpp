@@ -1,6 +1,7 @@
 #include "../hdr/DealerDriver.h"
 #include "../hdr/Environment.h"
 #include "../hdr/KeyGenerator.h"
+#include "../hdr/DealerServer.h"
 
 constexpr unsigned int hash(const char *s, int off = 0) 
 {                        
@@ -145,6 +146,12 @@ int main(int argc, char* argv[])
     if (debug)
     {
         environment->print_environment();
-        key_gen->print_key_generator();
+        //key_gen->print_key_generator();
     }
+
+    DealerServer *server = new DealerServer(port, debug);
+    QObject::connect(server, &DealerServer::closed, &app, &QCoreApplication::quit);
+
+    app.exec();
+
 }
