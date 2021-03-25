@@ -1,4 +1,6 @@
-QT = websockets
+QT += core
+QT += network
+QT -= gui
 
 TARGET = Dealer
 CONFIG += console

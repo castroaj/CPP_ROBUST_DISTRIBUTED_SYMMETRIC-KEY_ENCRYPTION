@@ -149,9 +149,7 @@ int main(int argc, char* argv[])
         //key_gen->print_key_generator();
     }
 
-    DealerServer *server = new DealerServer(port, debug);
-    QObject::connect(server, &DealerServer::closed, &app, &QCoreApplication::quit);
+    DealerServer server(port, debug);
 
     app.exec();
-
 }
