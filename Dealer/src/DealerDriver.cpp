@@ -1,7 +1,7 @@
 #include "../hdr/DealerDriver.h"
 #include "../hdr/Environment.h"
 #include "../hdr/KeyGenerator.h"
-#include "../hdr/DealerServer.h"
+#include "../hdr/DealerClient.h"
 
 constexpr unsigned int hash(const char *s, int off = 0) 
 {                        
@@ -42,7 +42,7 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
             switch (hash(name.c_str()))
             {
                 // Setup vector of ip addresses that will be the locations of the machines
-                case hash("IP_ADDRESSES"):
+                case hash("DEALER_IP_ADDRESSES"):
                     {
                         value = line.substr(delimPos + 1);
 
@@ -54,8 +54,6 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
                         {
                             addresses->append(qstringlist.at(i));
                         }
-                        
-                        //string_split(value, ",", addresses);
 
                         break;
                     }
@@ -149,7 +147,10 @@ int main(int argc, char* argv[])
         //key_gen->print_key_generator();
     }
 
-    DealerServer server(port, debug);
+    DealerClient client;
+
+    client.doConnect();
+    //client.sendMesssage();
 
     app.exec();
 }

@@ -55,12 +55,12 @@ OBJECTS_DIR   = ../bin/
 SOURCES       = DealerDriver.cpp \
 		Environment.cpp \
 		KeyGenerator.cpp \
-		DealerServer.cpp moc_DealerServer.cpp
+		DealerClient.cpp moc_DealerClient.cpp
 OBJECTS       = ../bin/DealerDriver.o \
 		../bin/Environment.o \
 		../bin/KeyGenerator.o \
-		../bin/DealerServer.o \
-		../bin/moc_DealerServer.o
+		../bin/DealerClient.o \
+		../bin/moc_DealerClient.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -139,10 +139,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		../hdr/Environment.h \
 		../hdr/KeyGenerator.h \
 		../hdr/Qt.h \
-		../hdr/DealerServer.h DealerDriver.cpp \
+		../hdr/DealerClient.h DealerDriver.cpp \
 		Environment.cpp \
 		KeyGenerator.cpp \
-		DealerServer.cpp
+		DealerClient.cpp
 QMAKE_TARGET  = Dealer
 DESTDIR       = 
 TARGET        = Dealer
@@ -320,8 +320,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../hdr/DealerDriver.h ../hdr/Environment.h ../hdr/KeyGenerator.h ../hdr/Qt.h ../hdr/DealerServer.h $(DISTDIR)/
-	$(COPY_FILE) --parents DealerDriver.cpp Environment.cpp KeyGenerator.cpp DealerServer.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../hdr/DealerDriver.h ../hdr/Environment.h ../hdr/KeyGenerator.h ../hdr/Qt.h ../hdr/DealerClient.h $(DISTDIR)/
+	$(COPY_FILE) --parents DealerDriver.cpp Environment.cpp KeyGenerator.cpp DealerClient.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -353,15 +353,15 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 	g++ -pipe -fopenmp -lcrypto -g -O0 -O2 -Wall -W -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_DealerServer.cpp
+compiler_moc_header_make_all: moc_DealerClient.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_DealerServer.cpp
-moc_DealerServer.cpp: ../hdr/DealerServer.h \
+	-$(DEL_FILE) moc_DealerClient.cpp
+moc_DealerClient.cpp: ../hdr/DealerClient.h \
 		../hdr/DealerDriver.h \
 		../hdr/Qt.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../hdr/DealerServer.h -o moc_DealerServer.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../hdr/DealerClient.h -o moc_DealerClient.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -380,8 +380,7 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 ../bin/DealerDriver.o: DealerDriver.cpp ../hdr/DealerDriver.h \
 		../hdr/Qt.h \
 		../hdr/Environment.h \
-		../hdr/KeyGenerator.h \
-		../hdr/DealerServer.h
+		../hdr/KeyGenerator.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerDriver.o DealerDriver.cpp
 
 ../bin/Environment.o: Environment.cpp ../hdr/Environment.h \
@@ -394,13 +393,13 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 		../hdr/Qt.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/KeyGenerator.o KeyGenerator.cpp
 
-../bin/DealerServer.o: DealerServer.cpp ../hdr/DealerServer.h \
+../bin/DealerClient.o: DealerClient.cpp ../hdr/DealerClient.h \
 		../hdr/DealerDriver.h \
 		../hdr/Qt.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerServer.o DealerServer.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerClient.o DealerClient.cpp
 
-../bin/moc_DealerServer.o: moc_DealerServer.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/moc_DealerServer.o moc_DealerServer.cpp
+../bin/moc_DealerClient.o: moc_DealerClient.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/moc_DealerClient.o moc_DealerClient.cpp
 
 ####### Install
 

@@ -10,7 +10,7 @@ SOURCES += \
     DealerDriver.cpp \
     Environment.cpp \
     KeyGenerator.cpp \
-    DealerServer.cpp
+    DealerClient.cpp
     
 
 HEADERS += \
@@ -18,7 +18,7 @@ HEADERS += \
     ../hdr/Environment.h \
     ../hdr/KeyGenerator.h \
     ../hdr/Qt.h \
-    ../hdr/DealerServer.h
+    ../hdr/DealerClient.h
     
 
 QMAKE_CXXFLAGS += -fopenmp
