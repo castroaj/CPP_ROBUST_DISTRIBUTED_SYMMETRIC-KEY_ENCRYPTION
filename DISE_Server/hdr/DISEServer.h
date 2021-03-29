@@ -1,13 +1,13 @@
-#ifndef DEALER_SERVER_H
-#define DEALER_SERVER_H
-    #include "DealerDriver.h"
+#ifndef DISE_SERVER_H
+#define DISE_SERVER_H
+    #include "DISEServerDriver.h"
 
-    class DealerServer : public QObject
+    class DISEServer : public QObject
     {
         Q_OBJECT
         public:
-            explicit DealerServer(int port, bool debug = false, QObject *parent = nullptr);
-            ~DealerServer();
+            explicit DISEServer(int port, bool debug = false, QObject *parent = nullptr);
+            ~DISEServer();
 
         Q_SIGNALS:
             void newMessage(QString);

@@ -9,6 +9,10 @@
     #include <QtCore/QMap>
     #include <QtCore/QString>
     #include <QtCore/QDebug>
-    #include <QtWebSockets/qwebsocketserver.h>
-    #include <QtWebSockets/qwebsocket.h>
+    #include <QTcpServer>
+    #include <QTcpSocket>
+    #include <QMetaType>
+    #include <QSet>
+    #include <QStandardPaths>
+    #include <QDataStream>
 #endif 
