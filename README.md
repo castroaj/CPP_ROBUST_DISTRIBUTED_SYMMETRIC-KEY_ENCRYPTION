@@ -18,22 +18,40 @@ Professor Wang's paper: [Robust distributed symmetric-key encryption](https://ep
 ---
 ## How to Compile and Run
 
-### Server
+### Server Local Version
 - **All the servers should be run from different distributed machines**
+- ./run.sh
+- Or:
 - cd into server folder
 - qmake
 - make
 - cd ..
-- ./src/server
+- ./src/server [OPTIONS]
+- options:
+ -c *config file* (a config file see example config in Dealer/config/Setup.conf)
+ -d (debug)
+ -p *port* (port to connect to)
 
-### Driver
+### Server Local Docker Version
+- sudo docker build . -t diseserver:1
+- docker run --network=host diseserver:1
+
+### Server Google Cloud Run Version (Currently Unimplemented)
+- gcloud builds submit --tag gcr.io/distributed-cryptography/[image name]
+- gcloud run deploy --image gcr.io/distributed-cryptography/[image name] --platform managed
+
+### Dealer
 - **all servers must be running to run the driver**
 - cd into driver folder
 - qmake
 - make
-- ./driver
+- ./dealer [OPTIONS]
+- options:
+ -c *config file* (a config file see example config in Dealer/config/Setup.conf)
+ -d (debug)
+ -p *port* (port to connect to)
 
-### Client
+### Client (Currently Unimplemented)
 - **all servers must be running to run the client**
 - cd into client folder
 - qmake
@@ -90,7 +108,7 @@ Professor Wang's paper: [Robust distributed symmetric-key encryption](https://ep
 ## Communication patterns
 
 ### Driver to servers
-![driver to servers](https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Diagrams/DriverFlow.pdf "Driver Flow.")
+![driver to servers](https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/blob/main/Diagrams/DealerServerFlow.pdf "Driver Flow.")
 
 ### Client to servers
-![client to servers](https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Diagrams/ClientServerFlow.pdf "Client Transaction Flow.")
+![client to servers](https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/blob/main/Diagrams/ClientServerFlow.pdf "Client Transaction Flow.")
