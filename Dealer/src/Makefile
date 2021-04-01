@@ -380,7 +380,8 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 ../bin/DealerDriver.o: DealerDriver.cpp ../hdr/DealerDriver.h \
 		../hdr/Qt.h \
 		../hdr/Environment.h \
-		../hdr/KeyGenerator.h
+		../hdr/KeyGenerator.h \
+		../hdr/DealerClient.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerDriver.o DealerDriver.cpp
 
 ../bin/Environment.o: Environment.cpp ../hdr/Environment.h \

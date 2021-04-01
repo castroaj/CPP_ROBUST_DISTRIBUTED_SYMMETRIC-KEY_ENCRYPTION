@@ -83,7 +83,7 @@ void KeyGenerator::create_all_key_list()
 
 void KeyGenerator::create_omega_table()
 {
-
+    
 }
 
 void KeyGenerator::create_key_table()

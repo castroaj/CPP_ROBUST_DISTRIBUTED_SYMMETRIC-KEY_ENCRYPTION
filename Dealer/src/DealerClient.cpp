@@ -9,7 +9,7 @@ DealerClient::~DealerClient()
 {
 }
 
-void DealerClient::doConnect()
+void DealerClient::doConnect(KeyGenerator* key_gen, QList<QString>* addresses)
 {
     socket = new QTcpSocket(this);
 
@@ -20,8 +20,16 @@ void DealerClient::doConnect()
 
     qDebug() << "connecting...";
 
+    for (unsigned int i = 0; i < addresses->size(); i++)
+    {
+        QString curString = addresses->at(i);
+
+        qDebug() << curString;
+    }
+
+
     // this is not blocking call
-    socket->connectToHost("localhost", 1234);
+    socket->connectToHost(addresses->at(0), 1234);
 
     socket->write("Hi Server");
 

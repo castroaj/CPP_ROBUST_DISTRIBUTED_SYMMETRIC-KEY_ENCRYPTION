@@ -100,6 +100,7 @@ int main(int argc, char* argv[])
     QCommandLineOption dbgOption(QStringList() << "d" << "debug", QCoreApplication::translate("main", "Debug Output [default: off]."));
     QCommandLineOption portOption(QStringList() << "p" << "port", QCoreApplication::translate("main", "Port for server [default: 1234]"), QCoreApplication::translate("main", "port"), QLatin1String("1234"));
     QCommandLineOption configOption(QStringList() << "c" << "config", "Fullpath and extension of input <file>", "file");
+    
 
     parser.setApplicationDescription("Networking Setup");
     parser.addHelpOption();

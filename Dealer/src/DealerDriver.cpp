@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 
     DealerClient client;
 
-    client.doConnect();
+    client.doConnect(key_gen, environment->get_ref_to_addresses());
     //client.sendMesssage();
 
     app.exec();
