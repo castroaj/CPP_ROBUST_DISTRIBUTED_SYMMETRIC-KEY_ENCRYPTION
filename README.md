@@ -103,12 +103,3 @@ Professor Wang's paper: [Robust distributed symmetric-key encryption](https://ep
 2. Send to the honest initiator:
  the partial results 
 3. Conclude this transaction
-
----
-## Communication patterns
-
-### Driver to servers
-[Dealer to Servers]: https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/blob/main/Diagrams/DealerServerFlow.pdf "Driver Flow."
-
-### Client to servers
-[Client to Servers]: https://github.com/castroaj/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/blob/main/Diagrams/ClientServerFlow.pdf "Client Transaction Flow."
