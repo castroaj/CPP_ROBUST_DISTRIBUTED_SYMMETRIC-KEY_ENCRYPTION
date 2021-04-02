@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
     if (debug)
     {
         environment->print_environment();
-        //key_gen->print_key_generator();
+        key_gen->print_key_generator();
     }
 
     DealerClient client;
