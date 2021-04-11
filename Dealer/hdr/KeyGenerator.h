@@ -5,15 +5,27 @@
     class KeyGenerator
     {
         private:
-            unsigned int key_count;
-            unsigned int key_size;
+            int key_count;
+            int key_count_per_machine;
+            int key_size;
+            int n;
+            int t;
+            int key_idx;
+            int* omega_col_idxs;
+            int* omega_matrix; 
             QList<unsigned char*>* all_key_list;
             QMap<QString, QList<int>>* omega_table;
             QMap<QString, QList<unsigned char*>>* key_table;
 
+            int factorial(int x);
             void create_all_key_list();
             void create_omega_table();
             void create_key_table();
+            void populate_omega_table(int servers[], int key_idx);
+            void find_combos(int server_combo[], int start_num, int combo_idx);
+            void generate_omega_matrix();
+            void print_omega_table();
+
 
         public:
             KeyGenerator(unsigned int dist_mode, QList<QString>* addresses);
@@ -21,10 +33,10 @@
 
             void print_key_generator();
 
-            unsigned int get_key_count() { return key_count; }
+            int get_key_count() { return key_count; }
             void set_key_count(unsigned int kc) { key_count = kc; }
 
-            unsigned int get_key_size() { return key_size; }
+            int get_key_size() { return key_size; }
             void set_key_size(unsigned int ks) { key_size = ks; }
 
             QList<unsigned char*>* get_ref_to_key_list() { return all_key_list; }

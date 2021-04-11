@@ -9,7 +9,7 @@ DealerClient::~DealerClient()
 {
 }
 
-void DealerClient::doConnect(KeyGenerator* key_gen, QList<QString>* addresses)
+void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port)
 {
     socket = new QTcpSocket(this);
 
@@ -20,24 +20,22 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QList<QString>* addresses)
 
     qDebug() << "connecting...";
 
-    for (unsigned int i = 0; i < addresses->size(); i++)
-    {
-        QString curString = addresses->at(i);
+    socket->connectToHost(ip, port);
 
-        qDebug() << curString;
+    if(socket->waitForConnected(3000))
+    {
+        qDebug() << "Connected!";
+
+        // send
+        socket->write("hello server\r\n\r\n\r\n\r\n");
+        socket->waitForBytesWritten(1000);
+        socket->waitForReadyRead(3000);
+
+        socket->close();
     }
-
-
-    // this is not blocking call
-    socket->connectToHost(addresses->at(0), 1234);
-
-    socket->write("Hi Server");
-
-    // we need to wait...
-    if(!socket->waitForConnected(5000))
+    else
     {
-        qDebug() << "Error: " << socket->errorString();
-
+        qDebug() << "Not connected";
     }
 }
 

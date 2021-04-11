@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
     QString inputFileName = parser.value(configOption);
     bool debug = parser.isSet(dbgOption);
-    int port = parser.value(portOption).toInt();
+    //int port = parser.value(portOption).toInt();
 
     // Declare/Initalize key data structures for the application
     Environment* environment = new Environment();
@@ -147,10 +147,31 @@ int main(int argc, char* argv[])
         key_gen->print_key_generator();
     }
 
-    DealerClient client;
 
-    client.doConnect(key_gen, environment->get_ref_to_addresses());
-    //client.sendMesssage();
+    QList<QString>* addresses = environment->get_ref_to_addresses();
+    //QList<DealerClient*> clients;
 
-    app.exec();
+    #pragma omp parallel for
+    for (int i = 0; i < addresses->size(); i++)
+    {
+        DealerClient* client = new DealerClient();
+        //clients.append(client);
+
+        QString curString = addresses->at(i);
+        QStringList l = curString.split(QLatin1Char(':'));
+        QString ip = l.at(0);
+        QString port = l.at(1);
+
+        qDebug() << ip << " " << port.toInt();
+
+        client->doConnect(key_gen, ip, port.toInt());
+
+        std::cout << "\n\n";
+    }
+
+
+
+
+    //app.exec();
+    //app.quit();
 }

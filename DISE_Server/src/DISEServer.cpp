@@ -53,13 +53,17 @@ void DISEServer::readSocket()
 {
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
     
-    socket->waitForBytesWritten(5000);
     socket->waitForReadyRead(1000);
     qDebug() << "Reading: " << socket->bytesAvailable();
 
     qDebug() << socket->readAll();
 
+    socket->write("Hello Client");
     socket->flush();
+
+    socket->waitForBytesWritten(5000);
+
+    socket->close();
 }
 
 void DISEServer::discardSocket()
