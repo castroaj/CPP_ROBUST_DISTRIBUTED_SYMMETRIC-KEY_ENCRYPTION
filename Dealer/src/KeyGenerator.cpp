@@ -13,13 +13,13 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode, QList<QString>* addresses)
                 n = 5;
                 t = 3;
                 key_size = 32;
-                key_count = factorial(n) / (factorial(t-1) * factorial(t)); // 10
-                key_count_per_machine = factorial(n-1) / (factorial(t-1) * factorial(n - t)); // 6
+                key_count = nChoosek(n, t-1);
+                key_count_per_machine = nChoosek(n-1, t-1);
                 key_idx = 0;
                 omega_col_idxs = (int*) calloc(n, sizeof(int));
                 omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
                 create_all_key_list();
-                //create_omega_table();
+                create_omega_table();
                 create_key_table();
                 break;
             }
@@ -50,21 +50,14 @@ KeyGenerator::~KeyGenerator()
     delete key_table;
 }
 
-int KeyGenerator::factorial(int x)
-{
-    if(x > 1)
-        return x * factorial(x - 1);
-    else
-        return 1;
-}
-
-
 void KeyGenerator::print_key_generator()
 {
     using namespace std;
 
     cout << "Key Count: " << key_count << endl;
     cout << "Key Size: " << key_size << endl;
+    cout << "Keys Per Machine:" << key_count_per_machine << endl;
+
 
     cout << "All Keys: " << endl;
 
@@ -98,7 +91,7 @@ void KeyGenerator::create_all_key_list()
 void KeyGenerator::create_omega_table()
 {
     generate_omega_matrix();
-    print_omega_table();
+    //print_omega_table();
 }
 
 void KeyGenerator::create_key_table()
@@ -144,4 +137,19 @@ void KeyGenerator::print_omega_table()
       }
     }
     printf("\n");
+}
+
+
+unsigned KeyGenerator::nChoosek( unsigned n, unsigned k )
+{
+    if (k > n) return 0;
+    if (k * 2 > n) k = n-k;
+    if (k == 0) return 1;
+
+    int result = n;
+    for( int i = 2; i <= k; ++i ) {
+    result *= (n-i+1);
+    result /= i;
+    }
+    return result;
 }
