@@ -28,31 +28,20 @@
 
 
         public:
-            KeyGenerator(unsigned int dist_mode, QList<QString>* addresses);
+            KeyGenerator(unsigned int dist_mode);
             ~KeyGenerator();
-
             void print_key_generator();
-
             int get_key_count() { return key_count; }
             void set_key_count(unsigned int kc) { key_count = kc; }
-
             int get_key_size() { return key_size; }
             void set_key_size(unsigned int ks) { key_size = ks; }
-
             QList<unsigned char*>* get_ref_to_key_list() { return all_key_list; }
-
             QMap<QString, QList<int>>* get_ref_to_omega_table() { return omega_table; }
-
             QMap<QString, QList<unsigned char*>>* get_ref_to_key_table() { return key_table; }
-
             int* get_ref_to_omega_matrix() { return omega_matrix; }
-
             int get_size_of_omega_table() { return n * key_count_per_machine; }
-
             int get_key_count_per_machine() { return key_count_per_machine; }
-
             int get_size_of_each_key() { return key_size; }
-
     };
 
 #endif

@@ -2,7 +2,6 @@
 
 QT_USE_NAMESPACE
 
-//! [constructor]
 DISEServer::DISEServer(int port, bool debug, QObject* parent) : 
     QObject(parent),
     m_server(new QTcpServer),
@@ -45,8 +44,6 @@ void DISEServer::appendToSocketList(QTcpSocket* socket)
     connection_set.insert(socket);
     connect(socket, &QTcpSocket::readyRead, this, &DISEServer::readSocket);
     connect(socket, &QTcpSocket::disconnected, this, &DISEServer::discardSocket);
-
-    //readSocket(socket);
 }
 
 void DISEServer::readSocket()
@@ -56,60 +53,17 @@ void DISEServer::readSocket()
     socket->waitForReadyRead(1000);
     qDebug() << "Reading: " << socket->bytesAvailable();
 
-    QByteArray buffer = socket->readAll();
-    QDataStream ds(buffer);
-    int sizeOfOmegaMatrix = 0;
-    ds >> sizeOfOmegaMatrix;
-
-    int omegaMatrix[sizeOfOmegaMatrix];
-
-    for (int i = 0; i < sizeOfOmegaMatrix; i++)
+    QString senderCode = socket->read(1);
+    int code = senderCode.toInt();
+    
+    switch(code)
     {
-        ds >> omegaMatrix[i];
+        case 0: // DEALER MESSAGE
+            qDebug() << "Dealer Message Recieved";
+            handleDealer(socket);
+            break;
+
     }
-
-    //qDebug() << "Size: " << size;
-    // for (int row = 0; row < 5; row++) {
-    //   printf("\n");
-    //   for (int col = 0; col < 6; col++) {
-    //      printf("%d ", *(omegaMatrix + row*6 + col));
-    //   }
-    // }
-    // printf("\n");
-
-    int sizeOfKeyList = 0;
-    ds >> sizeOfKeyList;
-
-    int sizeOfEachKey = 0;
-    ds >> sizeOfEachKey;
-
-    qDebug() << "Size of Key List: " << sizeOfKeyList;
-    qDebug() << "Size of Each Key: " << sizeOfEachKey;
-
-    unsigned char keyList[sizeOfKeyList * sizeOfEachKey];
-
-    for (int i = 0; i < sizeOfKeyList * sizeOfEachKey; i++)
-    {
-        ds >> keyList[i];
-    }
-
-    for (int i = 0; i < sizeOfKeyList; i++)
-    {
-        for (int j = 0; j < sizeOfEachKey; j++)
-        {
-            printf("%X", keyList[j + (sizeOfEachKey * i)]);
-        }
-        std::cout << "\n";
-    }
-
-
-
-    socket->write("Hello Client");
-    socket->flush();
-
-    socket->waitForBytesWritten(5000);
-
-    socket->close();
 }
 
 void DISEServer::discardSocket()
@@ -123,4 +77,64 @@ void DISEServer::discardSocket()
     std::cout << "Socket Disconnected" << std::endl;
     
     socket->deleteLater();
+}
+
+
+void DISEServer::handleDealer(QTcpSocket* socket)
+{
+    // Create a data stream to read from the socket
+    QByteArray buffer = socket->readAll();
+    QDataStream ds(buffer);
+    
+    // Read in the size of the Omega Matrix
+    int sizeOfOmegaMatrix = 0;
+    ds >> sizeOfOmegaMatrix;
+
+    // Create the buffer for the Omega Matrix
+    int omegaMatrix[sizeOfOmegaMatrix];
+
+    // Read in the omega matrix
+    for (int i = 0; i < sizeOfOmegaMatrix; i++)
+    {
+        ds >> omegaMatrix[i];
+    }
+
+    // Read in the size of the key list
+    int sizeOfKeyList = 0;
+    ds >> sizeOfKeyList;
+
+    // Read in the size of a key
+    int sizeOfEachKey = 0;
+    ds >> sizeOfEachKey;
+
+    // Create buffer for key list
+    unsigned char keyList[sizeOfKeyList * sizeOfEachKey];
+
+    // Read in the key list
+    for (int i = 0; i < sizeOfKeyList * sizeOfEachKey; i++)
+    {
+        ds >> keyList[i];
+    }
+
+    if (debug)
+    {
+
+        qDebug() << "Size of Key List: " << sizeOfKeyList;
+        qDebug() << "Size of Each Key: " << sizeOfEachKey;  
+
+        // Print out the List of Keys assigned to this machine
+        for (int i = 0; i < sizeOfKeyList; i++)
+        {
+            for (int j = 0; j < sizeOfEachKey; j++)
+            {
+                printf("%X ", keyList[j + (sizeOfEachKey * i)]);
+            }
+            std::cout << "\n";
+        }
+    }
+
+    socket->write("Dealer Transaction Complete");
+    socket->flush();
+    socket->waitForBytesWritten(5000);
+    socket->close();
 }

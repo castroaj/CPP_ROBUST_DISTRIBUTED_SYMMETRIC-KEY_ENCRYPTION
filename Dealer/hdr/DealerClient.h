@@ -7,7 +7,7 @@
     {
         Q_OBJECT
         public:
-            explicit DealerClient(QObject *parent = nullptr);
+            explicit DealerClient(bool debug, QObject *parent = nullptr);
             ~DealerClient();
             void doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num);
             

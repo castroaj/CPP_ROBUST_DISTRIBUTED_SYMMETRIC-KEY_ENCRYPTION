@@ -128,15 +128,8 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
     }
 
-    // NEEDS TO BE REMOVED IN FUTURE
-    if (environment->get_dist_mode() == 1)
-    {
-        std::cout << "Currently Unsupported" << std::endl;
-        return EXIT_FAILURE;
-    }
-
     if (environment->get_dist_mode() == 0 || environment->get_dist_mode() == 1)
-        key_gen = new KeyGenerator(environment->get_dist_mode(), environment->get_ref_to_addresses());
+        key_gen = new KeyGenerator(environment->get_dist_mode());
     else
         return EXIT_FAILURE;
 
@@ -147,28 +140,23 @@ int main(int argc, char* argv[])
         key_gen->print_key_generator();
     }
 
-
     QList<QString>* addresses = environment->get_ref_to_addresses();
-    //QList<DealerClient*> clients;
 
     #pragma omp parallel for
     for (int i = 0; i < addresses->size(); i++)
     {
-        DealerClient* client = new DealerClient();
-        //clients.append(client);
+        DealerClient* client = new DealerClient(debug);
 
         QString curString = addresses->at(i);
         QStringList l = curString.split(QLatin1Char(':'));
         QString ip = l.at(0);
         QString port = l.at(1);
 
-        qDebug() << ip << " " << port.toInt();
+        if (debug)
+            qDebug() << ip << " " << port.toInt();
 
         client->doConnect(key_gen, ip, port.toInt(), i);
-
-        std::cout << "\n\n";
     }
 
-    //app.exec();
-    //app.quit();
+    std::cout << "Dealer Finished" << std::endl;
 }

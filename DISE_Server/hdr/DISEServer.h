@@ -17,6 +17,7 @@
             void appendToSocketList(QTcpSocket* socket);
             void readSocket();
             void discardSocket();
+            void handleDealer(QTcpSocket* socket);
         
         private:
             QTcpServer* m_server;

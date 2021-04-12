@@ -1,6 +1,6 @@
 #include "../hdr/KeyGenerator.h"
 
-KeyGenerator::KeyGenerator(unsigned int dist_mode, QList<QString>* addresses)
+KeyGenerator::KeyGenerator(unsigned int dist_mode)
 {
     all_key_list = new QList<unsigned char*>();
     omega_table = new QMap<QString, QList<int>>();
@@ -8,28 +8,25 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode, QList<QString>* addresses)
 
     switch (dist_mode)
     {
-        case 0:
-            {
+        case 0: // SMALL CASE
                 n = 5;
                 t = 3;
-                key_size = 32;
-                key_count = nChoosek(n, t-1);
-                key_count_per_machine = nChoosek(n-1, t-1);
-                key_idx = 0;
-                omega_col_idxs = (int*) calloc(n, sizeof(int));
-                omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
-                create_all_key_list();
-                create_omega_table();
-                create_key_table();
                 break;
-            }
-        case 1:
-            {
+        case 1: // LARGER CASE
+                n = 24;
+                t = 16;
                 break;
-            }
-        default:
-            break;
     }
+
+    key_size = 32;
+    key_count = nChoosek(n, t-1);
+    key_count_per_machine = nChoosek(n-1, t-1);
+    key_idx = 0;
+    omega_col_idxs = (int*) calloc(n, sizeof(int));
+    omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
+    create_all_key_list();
+    create_omega_table();
+    create_key_table();
 }
 
 KeyGenerator::~KeyGenerator()
@@ -91,7 +88,7 @@ void KeyGenerator::create_all_key_list()
 void KeyGenerator::create_omega_table()
 {
     generate_omega_matrix();
-    print_omega_table();
+    //print_omega_table();
 }
 
 void KeyGenerator::create_key_table()
@@ -146,9 +143,9 @@ unsigned KeyGenerator::nChoosek( unsigned n, unsigned k )
     if (k == 0) return 1;
 
     int result = n;
-    for( int i = 2; i <= k; ++i ) {
-    result *= (n-i+1);
-    result /= i;
+    for (unsigned int i = 2; i <= k; ++i) {
+        result *= (n-i+1);
+        result /= i;
     }
     return result;
 }

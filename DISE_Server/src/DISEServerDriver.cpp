@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        if (!setup_env_with_conf("config/Setup.conf", environment))
+        if (!setup_env_with_conf("../config/Setup.conf", environment))
             return EXIT_FAILURE;
     }
 
