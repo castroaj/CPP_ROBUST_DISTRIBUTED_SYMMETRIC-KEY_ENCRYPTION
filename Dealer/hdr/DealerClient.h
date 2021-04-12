@@ -9,7 +9,7 @@
         public:
             explicit DealerClient(QObject *parent = nullptr);
             ~DealerClient();
-            void doConnect(KeyGenerator* key_gen, QString ip, int port);
+            void doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num);
             
         Q_SIGNALS:
             //void sendMesssage();

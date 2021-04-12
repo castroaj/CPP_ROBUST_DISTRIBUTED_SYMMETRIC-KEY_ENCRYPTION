@@ -359,6 +359,7 @@ compiler_moc_header_clean:
 moc_DealerClient.cpp: ../hdr/DealerClient.h \
 		../hdr/DealerDriver.h \
 		../hdr/Qt.h \
+		../hdr/KeyGenerator.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/Dealer/src -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../hdr/DealerClient.h -o moc_DealerClient.cpp
@@ -396,7 +397,8 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 
 ../bin/DealerClient.o: DealerClient.cpp ../hdr/DealerClient.h \
 		../hdr/DealerDriver.h \
-		../hdr/Qt.h
+		../hdr/Qt.h \
+		../hdr/KeyGenerator.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DealerClient.o DealerClient.cpp
 
 ../bin/moc_DealerClient.o: moc_DealerClient.cpp 

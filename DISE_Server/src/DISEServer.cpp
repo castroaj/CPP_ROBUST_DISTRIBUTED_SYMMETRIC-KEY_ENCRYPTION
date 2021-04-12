@@ -56,7 +56,53 @@ void DISEServer::readSocket()
     socket->waitForReadyRead(1000);
     qDebug() << "Reading: " << socket->bytesAvailable();
 
-    qDebug() << socket->readAll();
+    QByteArray buffer = socket->readAll();
+    QDataStream ds(buffer);
+    int sizeOfOmegaMatrix = 0;
+    ds >> sizeOfOmegaMatrix;
+
+    int omegaMatrix[sizeOfOmegaMatrix];
+
+    for (int i = 0; i < sizeOfOmegaMatrix; i++)
+    {
+        ds >> omegaMatrix[i];
+    }
+
+    //qDebug() << "Size: " << size;
+    // for (int row = 0; row < 5; row++) {
+    //   printf("\n");
+    //   for (int col = 0; col < 6; col++) {
+    //      printf("%d ", *(omegaMatrix + row*6 + col));
+    //   }
+    // }
+    // printf("\n");
+
+    int sizeOfKeyList = 0;
+    ds >> sizeOfKeyList;
+
+    int sizeOfEachKey = 0;
+    ds >> sizeOfEachKey;
+
+    qDebug() << "Size of Key List: " << sizeOfKeyList;
+    qDebug() << "Size of Each Key: " << sizeOfEachKey;
+
+    unsigned char keyList[sizeOfKeyList * sizeOfEachKey];
+
+    for (int i = 0; i < sizeOfKeyList * sizeOfEachKey; i++)
+    {
+        ds >> keyList[i];
+    }
+
+    for (int i = 0; i < sizeOfKeyList; i++)
+    {
+        for (int j = 0; j < sizeOfEachKey; j++)
+        {
+            printf("%X", keyList[j + (sizeOfEachKey * i)]);
+        }
+        std::cout << "\n";
+    }
+
+
 
     socket->write("Hello Client");
     socket->flush();

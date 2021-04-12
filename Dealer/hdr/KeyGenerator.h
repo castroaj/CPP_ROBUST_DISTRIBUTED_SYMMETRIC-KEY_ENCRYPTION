@@ -44,6 +44,15 @@
             QMap<QString, QList<int>>* get_ref_to_omega_table() { return omega_table; }
 
             QMap<QString, QList<unsigned char*>>* get_ref_to_key_table() { return key_table; }
+
+            int* get_ref_to_omega_matrix() { return omega_matrix; }
+
+            int get_size_of_omega_table() { return n * key_count_per_machine; }
+
+            int get_key_count_per_machine() { return key_count_per_machine; }
+
+            int get_size_of_each_key() { return key_size; }
+
     };
 
 #endif

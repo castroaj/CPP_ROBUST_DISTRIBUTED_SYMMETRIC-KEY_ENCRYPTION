@@ -164,13 +164,10 @@ int main(int argc, char* argv[])
 
         qDebug() << ip << " " << port.toInt();
 
-        client->doConnect(key_gen, ip, port.toInt());
+        client->doConnect(key_gen, ip, port.toInt(), i);
 
         std::cout << "\n\n";
     }
-
-
-
 
     //app.exec();
     //app.quit();

@@ -91,7 +91,7 @@ void KeyGenerator::create_all_key_list()
 void KeyGenerator::create_omega_table()
 {
     generate_omega_matrix();
-    //print_omega_table();
+    print_omega_table();
 }
 
 void KeyGenerator::create_key_table()
@@ -102,7 +102,7 @@ void KeyGenerator::create_key_table()
 void KeyGenerator::populate_omega_table(int servers[], int key_idx) {
 
     for (int i = 0; i < t; i++) {
-        *(omega_matrix + servers[i]*key_count_per_machine + omega_col_idxs[servers[i]]) = key_idx + 1;
+        *(omega_matrix + servers[i]*key_count_per_machine + omega_col_idxs[servers[i]]) = key_idx;
         *(omega_col_idxs + servers[i]) += 1;
     }
 
@@ -123,9 +123,8 @@ void KeyGenerator::find_combos(int server_combo[], int start_num, int combo_idx)
 
 void KeyGenerator::generate_omega_matrix() {
     
-    int* server_combo = (int*) malloc(t);
+    int server_combo[t];
     find_combos(server_combo, 0, 0);
-    free(server_combo);
 }
 
 void KeyGenerator::print_omega_table()
