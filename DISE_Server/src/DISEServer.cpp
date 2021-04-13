@@ -82,16 +82,45 @@ void DISEServer::discardSocket()
 
 void DISEServer::handleDealer(QTcpSocket* socket)
 {
-    // Create a data stream to read from the socket
-    QByteArray buffer = socket->readAll();
+    QByteArray totalSizeBuffer = socket->read(sizeof(int));
+    QDataStream tsDs(totalSizeBuffer);
+
+    int totalSize = 0;
+    tsDs >> totalSize;
+
+    std::cout << "Total Size: " << totalSize << std::endl;
+
+    // // Create a data stream to read from the socket
+    QByteArray buffer;
+    QByteArray tmpBuffer;
     QDataStream ds(buffer);
     
+    int stopper = 0;
+    int bytesRead = 0;
+
+    while (bytesRead < totalSize)
+    {
+        if (socket->bytesAvailable())
+        {
+            tmpBuffer = socket->read(30000);
+            buffer.append(tmpBuffer);
+            
+            bytesRead += tmpBuffer.size();
+            qDebug() << tmpBuffer.size();
+
+            // if (stopper == 25)
+            //     break;
+
+            // stopper++;
+        }
+    }
+
     // Read in the size of the Omega Matrix
     int sizeOfOmegaMatrix = 0;
     ds >> sizeOfOmegaMatrix;
 
     // Create the buffer for the Omega Matrix
-    int omegaMatrix[sizeOfOmegaMatrix];
+    int* omegaMatrix = (int *) malloc(sizeOfOmegaMatrix * sizeof(int));
 
     // Read in the omega matrix
     for (int i = 0; i < sizeOfOmegaMatrix; i++)
@@ -108,7 +137,7 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     ds >> sizeOfEachKey;
 
     // Create buffer for key list
-    unsigned char keyList[sizeOfKeyList * sizeOfEachKey];
+    unsigned char* keyList = (unsigned char *)malloc(sizeOfKeyList * sizeOfEachKey);
 
     // Read in the key list
     for (int i = 0; i < sizeOfKeyList * sizeOfEachKey; i++)

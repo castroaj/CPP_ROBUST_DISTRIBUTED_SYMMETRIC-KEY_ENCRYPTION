@@ -25,8 +25,7 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode)
     omega_col_idxs = (int*) calloc(n, sizeof(int));
     omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
     create_all_key_list();
-    create_omega_table();
-    create_key_table();
+    generate_omega_matrix();
 }
 
 KeyGenerator::~KeyGenerator()
@@ -83,17 +82,6 @@ void KeyGenerator::create_all_key_list()
         #pragma omp critical
         all_key_list->append(cur_key);
     }
-}
-
-void KeyGenerator::create_omega_table()
-{
-    generate_omega_matrix();
-    //print_omega_table();
-}
-
-void KeyGenerator::create_key_table()
-{
-    
 }
 
 void KeyGenerator::populate_omega_table(int servers[], int key_idx) {

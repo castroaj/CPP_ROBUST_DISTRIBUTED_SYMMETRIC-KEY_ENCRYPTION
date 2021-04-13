@@ -53,6 +53,7 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
         for (int i=0; i < omega_table_size; i++)
             out << omega_matrix[i];
         
+        
         ///////////////////////////////////////////////////////////////////
 
         // Write key count and size to socket
@@ -71,10 +72,34 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
         }
         //////////////////////////////////////////////////////////////////
 
-        socket->write(block);
-        socket->waitForBytesWritten(1000);
-        socket->waitForReadyRead(3000);
+        // qDebug() << "Block Size: " << block.size();
 
+        // int totalSize = block.size();
+        // //char totalSizeBuffer[10 + sizeof(char)];
+
+        // //std::sprintf(totalSizeBuffer, "%d", totalSize);
+
+        // //qDebug() << totalSizeBuffer;
+
+        QByteArray totalSize;
+        QDataStream outSize(&totalSize, QIODevice::WriteOnly);
+        outSize.setVersion(QDataStream::Qt_4_5);
+
+        outSize << block.size();
+        socket->write(totalSize);
+
+        char* data = block.data();
+
+        int bytesWritten = 0;
+        while (bytesWritten < block.size())
+        {
+            bytesWritten += socket->write(data + bytesWritten, 5000);
+            //socket->waitForBytesWritten(1000);
+        }
+
+        qDebug() << "The number of bytes written is: " << bytesWritten;
+
+        socket->waitForReadyRead(3000);
         socket->close();
     }
     else

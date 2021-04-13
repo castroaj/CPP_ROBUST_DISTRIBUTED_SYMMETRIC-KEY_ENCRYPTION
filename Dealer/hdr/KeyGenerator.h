@@ -18,8 +18,6 @@
             QMap<QString, QList<unsigned char*>>* key_table;
 
             void create_all_key_list();
-            void create_omega_table();
-            void create_key_table();
             void populate_omega_table(int servers[], int key_idx);
             void find_combos(int server_combo[], int start_num, int combo_idx);
             void generate_omega_matrix();
