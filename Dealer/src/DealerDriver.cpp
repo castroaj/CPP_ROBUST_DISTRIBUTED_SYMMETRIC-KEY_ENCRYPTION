@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
         if (debug)
             qDebug() << ip << " " << port.toInt();
 
-        client->doConnect(key_gen, ip, port.toInt(), i);
+        client->doConnect(key_gen, ip, port.toInt(), i, addresses);
     }
 
     std::cout << "Dealer Finished" << std::endl;

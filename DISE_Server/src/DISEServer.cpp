@@ -51,7 +51,6 @@ void DISEServer::readSocket()
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
     
     socket->waitForReadyRead(1000);
-    qDebug() << "Reading: " << socket->bytesAvailable();
 
     QString senderCode = socket->read(1);
     int code = senderCode.toInt();
@@ -93,31 +92,25 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     // // Create a data stream to read from the socket
     QByteArray buffer;
     QByteArray tmpBuffer;
-    QDataStream ds(buffer);
-    
-    int stopper = 0;
-    int bytesRead = 0;
 
-    while (bytesRead < totalSize)
+    while (buffer.size() < totalSize)
     {
-        if (socket->bytesAvailable())
-        {
-            tmpBuffer = socket->read(30000);
-            buffer.append(tmpBuffer);
-            
-            bytesRead += tmpBuffer.size();
-            qDebug() << tmpBuffer.size();
-
-            // if (stopper == 25)
-            //     break;
-
-            // stopper++;
-        }
+        socket->waitForReadyRead();
+        tmpBuffer = socket->read(30000);
+        buffer.append(tmpBuffer);
     }
+
+    QDataStream ds(buffer);
+
+    qDebug() << "Dealer Transaction Complete";
+    socket->close();
 
     // Read in the size of the Omega Matrix
     int sizeOfOmegaMatrix = 0;
     ds >> sizeOfOmegaMatrix;
+
+    qDebug() << "Total Size Recieved " << buffer.size();
+    qDebug() << "Omega Matrix Size " << sizeOfOmegaMatrix;
 
     // Create the buffer for the Omega Matrix
     int* omegaMatrix = (int *) malloc(sizeOfOmegaMatrix * sizeof(int));
@@ -156,14 +149,44 @@ void DISEServer::handleDealer(QTcpSocket* socket)
         {
             for (int j = 0; j < sizeOfEachKey; j++)
             {
-                printf("%X ", keyList[j + (sizeOfEachKey * i)]);
+                // printf("%X ", keyList[j + (sizeOfEachKey * i)]);
             }
-            std::cout << "\n";
+            // std::cout << "\n";
         }
     }
 
-    socket->write("Dealer Transaction Complete");
-    socket->flush();
-    socket->waitForBytesWritten(5000);
-    socket->close();
+    // Read all servers ip's and ports
+    int machineNumber = 0;
+    int numberOfAddresses = 0;
+    int sizeOfEachAddress = 0;
+    ds >> machineNumber;
+    ds >> numberOfAddresses;
+    ds >> sizeOfEachAddress;
+    QList<std::tuple<QString, int>> addresses = QList<std::tuple<QString, int>>();
+
+    qDebug() << "Machine Number " << machineNumber;
+    qDebug() << "# addresses " << numberOfAddresses << " size of each " << sizeOfEachAddress;
+
+    for (int i = 0; i < numberOfAddresses; i++) 
+    {
+        QChar ch;
+        QString address;
+        for (int j = 0; j < sizeOfEachAddress; j++) 
+        {
+            ds >> ch;
+            address.append(ch);
+        }
+        QStringList l = address.split(QLatin1Char(':'));
+        QString ip = l.at(0);
+        int port = l.at(1).toInt();
+
+        qDebug() << i << " " << ip << " " << port;
+
+        addresses.append(std::make_tuple(ip, port));
+    }
+
+    // socket->write("Dealer Transaction Complete");
+    // socket->flush();
+    // socket->waitForBytesWritten(5000);
+
 }

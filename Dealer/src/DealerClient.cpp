@@ -10,7 +10,7 @@ DealerClient::~DealerClient()
 {
 }
 
-void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num)
+void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num, QList<QString>* addresses)
 {
     socket = new QTcpSocket(this);
 
@@ -70,16 +70,26 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
             for (int j=0; j < key_size; j++)
                 out << key[j];
         }
+
         //////////////////////////////////////////////////////////////////
 
-        // qDebug() << "Block Size: " << block.size();
+        // Write ip addresses and ports sepertated by a :
+        // machine identifier
+        out << uint32_t(machine_num);
+        // Amount of addresses
+        out << uint32_t(addresses->size());
+        // Size of each address
+        out << uint32_t(addresses->at(0).size());
 
-        // int totalSize = block.size();
-        // //char totalSizeBuffer[10 + sizeof(char)];
+        // Write out the addresses
+        for (int i = 0; i < addresses->size(); i++)
+        {
+            const QChar* address = addresses->at(i).data();
+            for (int j = 0; j < addresses->at(i).size(); j++)
+                out << address[j];
+        }
 
-        // //std::sprintf(totalSizeBuffer, "%d", totalSize);
-
-        // //qDebug() << totalSizeBuffer;
+        ///////////////////////////////////////////////////////////////////
 
         QByteArray totalSize;
         QDataStream outSize(&totalSize, QIODevice::WriteOnly);
@@ -87,19 +97,33 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
 
         outSize << block.size();
         socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
 
         char* data = block.data();
+
+        int maxWrite = 30000;
 
         int bytesWritten = 0;
         while (bytesWritten < block.size())
         {
-            bytesWritten += socket->write(data + bytesWritten, 5000);
-            //socket->waitForBytesWritten(1000);
+            // if we have less bytes remaining to write than the max size
+            if (block.size()- bytesWritten < maxWrite)
+            {
+                maxWrite = block.size() - bytesWritten;
+            }
+
+            // write to server
+            bytesWritten += socket->write(data + bytesWritten, maxWrite);
+            socket->flush();
+            socket->waitForBytesWritten(1000);
         }
 
         qDebug() << "The number of bytes written is: " << bytesWritten;
 
-        socket->waitForReadyRead(3000);
+        // socket->waitForReadyRead(3000);
+        // QString complete = socket->readAll();
+        // qDebug() << complete;
         socket->close();
     }
     else
