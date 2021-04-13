@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
     }
 
-    DISEServer server(port, debug);
+    DISEServer server(port, debug, environment);
     app.exec();
 
 

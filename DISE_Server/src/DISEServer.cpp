@@ -2,11 +2,12 @@
 
 QT_USE_NAMESPACE
 
-DISEServer::DISEServer(int port, bool debug, QObject* parent) : 
+DISEServer::DISEServer(int port, bool debug, Environment* env, QObject* parent) : 
     QObject(parent),
     m_server(new QTcpServer),
     debug(debug),
-    port(port)
+    port(port),
+    environment(env)
 {
     if(m_server->listen(QHostAddress::Any, port))
     {
@@ -102,7 +103,7 @@ void DISEServer::handleDealer(QTcpSocket* socket)
 
     QDataStream ds(buffer);
 
-    qDebug() << "Dealer Transaction Complete";
+    qDebug() << "Dealer Message Recieved";
     socket->close();
 
     // Read in the size of the Omega Matrix
@@ -138,23 +139,6 @@ void DISEServer::handleDealer(QTcpSocket* socket)
         ds >> keyList[i];
     }
 
-    if (debug)
-    {
-
-        qDebug() << "Size of Key List: " << sizeOfKeyList;
-        qDebug() << "Size of Each Key: " << sizeOfEachKey;  
-
-        // Print out the List of Keys assigned to this machine
-        for (int i = 0; i < sizeOfKeyList; i++)
-        {
-            for (int j = 0; j < sizeOfEachKey; j++)
-            {
-                // printf("%X ", keyList[j + (sizeOfEachKey * i)]);
-            }
-            // std::cout << "\n";
-        }
-    }
-
     // Read all servers ip's and ports
     int machineNumber = 0;
     int numberOfAddresses = 0;
@@ -184,6 +168,26 @@ void DISEServer::handleDealer(QTcpSocket* socket)
 
         addresses.append(std::make_tuple(ip, port));
     }
+
+    if (debug)
+    {
+
+        qDebug() << "Size of Key List: " << sizeOfKeyList;
+        qDebug() << "Size of Each Key: " << sizeOfEachKey;  
+
+        // Print out the List of Keys assigned to this machine
+        for (int i = 0; i < sizeOfKeyList; i++)
+        {
+            std::cout << *(omegaMatrix + (i + (machineNumber * sizeOfKeyList))) + 1 << ":  "; 
+            for (int j = 0; j < sizeOfEachKey; j++)
+            {
+                printf("%X ", keyList[j + (sizeOfEachKey * i)]);
+            }
+            std::cout << "\n";
+        }
+    }
+
+    qDebug() << "Dealer Transaction Complete";
 
     // socket->write("Dealer Transaction Complete");
     // socket->flush();

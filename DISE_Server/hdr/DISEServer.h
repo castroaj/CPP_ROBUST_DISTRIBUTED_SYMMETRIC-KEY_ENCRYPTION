@@ -1,12 +1,13 @@
 #ifndef DISE_SERVER_H
 #define DISE_SERVER_H
     #include "DISEServerDriver.h"
+    #include "Environment.h"
 
     class DISEServer : public QObject
     {
         Q_OBJECT
         public:
-            explicit DISEServer(int port, bool debug = false, QObject *parent = nullptr);
+            explicit DISEServer(int port, bool debug = false, Environment* env = nullptr, QObject *parent = nullptr);
             ~DISEServer();
 
         Q_SIGNALS:
@@ -24,5 +25,6 @@
             QSet<QTcpSocket*> connection_set;
             bool debug;
             int port;
+            Environment* environment;
     };      
 #endif
