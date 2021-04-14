@@ -11,6 +11,7 @@
     #include <openssl/rand.h>
     #include <tuple>
     #include "Qt.h"
+    #include <string>
 #endif
 
 #ifdef _OPENMP

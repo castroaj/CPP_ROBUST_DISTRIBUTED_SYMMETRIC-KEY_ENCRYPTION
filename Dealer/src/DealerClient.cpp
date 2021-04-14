@@ -34,6 +34,8 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
         auto omega_table_size = key_gen->get_size_of_omega_table();
         auto key_count_per_machine = key_gen->get_key_count_per_machine();
         auto key_size = key_gen->get_size_of_each_key();
+        auto n = key_gen->get_n();
+        auto t = key_gen->get_t();
 
         socket->write("0");
 
@@ -59,7 +61,11 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
         // Write key count and size to socket
         out << uint32_t(key_count_per_machine);
         out << uint32_t(key_size);
-        
+
+        // Write N and T to socket
+        out << uint32_t(n);
+        out << uint32_t(t);
+
         // Write keys associated with the machine to the socket
         for (int i = 0; i < key_count_per_machine; i++)
         {

@@ -40,22 +40,6 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
             // Switch based on enviorment variable name
             switch (hash(name.c_str()))
             {
-                // Setup vector of ip addresses that will be the locations of the machines
-                case hash("DEALER_IP_ADDRESSES"):
-                    {
-                        value = line.substr(delimPos + 1);
-
-                        QString qvalue = QString::fromUtf8(value.c_str());
-                        QStringList qstringlist = qvalue.split(QLatin1Char(','));
-                        auto addresses = enviorment->get_ref_to_addresses();
-
-                        for (int i = 0; i < qstringlist.size(); i++)
-                        {
-                            addresses->append(qstringlist.at(i));
-                        }
-
-                        break;
-                    }
                 // Set the thread count for all openmp_operations
                 case hash("THREAD_COUNT"):
                     {
@@ -101,7 +85,6 @@ int main(int argc, char* argv[])
     QCommandLineOption portOption(QStringList() << "p" << "port", QCoreApplication::translate("main", "Port for server [default: 1234]"), QCoreApplication::translate("main", "port"), QLatin1String("1234"));
     QCommandLineOption configOption(QStringList() << "c" << "config", "Fullpath and extension of input <file>", "file");
     
-
     parser.setApplicationDescription("Networking Setup");
     parser.addHelpOption();
     parser.addOption(dbgOption);

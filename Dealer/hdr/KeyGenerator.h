@@ -40,6 +40,8 @@
             int get_size_of_omega_table() { return n * key_count_per_machine; }
             int get_key_count_per_machine() { return key_count_per_machine; }
             int get_size_of_each_key() { return key_size; }
+            int get_n() {return n;}
+            int get_t() {return t;}
     };
 
 #endif

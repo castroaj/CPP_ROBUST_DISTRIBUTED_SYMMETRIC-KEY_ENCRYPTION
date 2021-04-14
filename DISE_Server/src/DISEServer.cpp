@@ -88,8 +88,6 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     int totalSize = 0;
     tsDs >> totalSize;
 
-    std::cout << "Total Size: " << totalSize << std::endl;
-
     // // Create a data stream to read from the socket
     QByteArray buffer;
     QByteArray tmpBuffer;
@@ -102,8 +100,6 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     }
 
     QDataStream ds(buffer);
-
-    qDebug() << "Dealer Message Recieved";
     socket->close();
 
     // Read in the size of the Omega Matrix
@@ -130,6 +126,14 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     int sizeOfEachKey = 0;
     ds >> sizeOfEachKey;
 
+    //Read in N
+    int n = 0;
+    ds >> n;
+
+    // Read in T
+    int t = 0;
+    ds >> t;
+
     // Create buffer for key list
     unsigned char* keyList = (unsigned char *)malloc(sizeOfKeyList * sizeOfEachKey);
 
@@ -140,17 +144,13 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     }
 
     // Read all servers ip's and ports
-    int machineNumber = 0;
-    int numberOfAddresses = 0;
-    int sizeOfEachAddress = 0;
+    int machineNumber, numberOfAddresses, sizeOfEachAddress;
     ds >> machineNumber;
     ds >> numberOfAddresses;
     ds >> sizeOfEachAddress;
-    QList<std::tuple<QString, int>> addresses = QList<std::tuple<QString, int>>();
 
-    qDebug() << "Machine Number " << machineNumber;
-    qDebug() << "# addresses " << numberOfAddresses << " size of each " << sizeOfEachAddress;
-
+    //Create a list of address/port pairs
+    QList<QPair<QString, int>*>* addresses = new QList<QPair<QString, int>*>();
     for (int i = 0; i < numberOfAddresses; i++) 
     {
         QChar ch;
@@ -164,33 +164,45 @@ void DISEServer::handleDealer(QTcpSocket* socket)
         QString ip = l.at(0);
         int port = l.at(1).toInt();
 
-        qDebug() << i << " " << ip << " " << port;
-
-        addresses.append(std::make_tuple(ip, port));
+        addresses->append(new QPair<QString, int>(ip, port));
     }
 
-    if (debug)
+    // // Create QMAP that maps a keyID to Key
+    QMap<int, unsigned char*>* keyListMap = new QMap<int, unsigned char*>();
+    for (int i = 0; i < sizeOfKeyList; i++)
     {
+        int keyID = *(omegaMatrix + (i + (machineNumber * sizeOfKeyList)));
 
-        qDebug() << "Size of Key List: " << sizeOfKeyList;
-        qDebug() << "Size of Each Key: " << sizeOfEachKey;  
+        unsigned char* key = (unsigned char *) malloc(sizeOfEachKey);
+        memcpy(key, keyList + (i * sizeOfEachKey), sizeOfEachKey);
 
-        // Print out the List of Keys assigned to this machine
-        for (int i = 0; i < sizeOfKeyList; i++)
-        {
-            std::cout << *(omegaMatrix + (i + (machineNumber * sizeOfKeyList))) + 1 << ":  "; 
-            for (int j = 0; j < sizeOfEachKey; j++)
-            {
-                printf("%X ", keyList[j + (sizeOfEachKey * i)]);
-            }
-            std::cout << "\n";
-        }
+        keyListMap->insert(keyID, key);
     }
+
+    free(keyList);
+
+    QMap<int, int*>* omegaMap = new QMap<int, int*>();
+    
+    for (int i = 0; i < n; i++)
+    {
+        int* omegaRow = (int *) malloc(sizeOfKeyList * sizeof(int));
+        std::memcpy(omegaRow, omegaMatrix + (sizeOfKeyList * i), sizeOfKeyList * sizeof(int));
+        
+        omegaMap->insert(i, omegaRow);
+    }
+
+    // Save references into enviorment
+    environment->set_machine_num(machineNumber);
+    environment->set_keys_per_machine(sizeOfKeyList);
+    environment->set_size_of_each_key(sizeOfEachKey);
+    environment->set_ref_to_addresses(addresses);
+    environment->set_ref_to_key_list(keyListMap);
+    environment->set_ref_to_omega_table(omegaMap);
+    environment->set_N(n);
+    environment->set_T(t);
+    environment->print_environment();
+
+
 
     qDebug() << "Dealer Transaction Complete";
-
-    // socket->write("Dealer Transaction Complete");
-    // socket->flush();
-    // socket->waitForBytesWritten(5000);
-
 }
