@@ -37,9 +37,8 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
         auto n = key_gen->get_n();
         auto t = key_gen->get_t();
 
+        // Dealer Message
         socket->write("0");
-
-        QString isReady = socket->read(5);
 
         // Create a data stream to the socket
         QByteArray block;

@@ -62,7 +62,14 @@ void DISEServer::readSocket()
             qDebug() << "Dealer Message Recieved";
             handleDealer(socket);
             break;
-
+        case 1: // CLIENT MESSAGE
+            qDebug() << "Client Message Recieved";
+            handleClient(socket);
+            break;
+        case 2: // HONEST INITIATOR MESSAGE
+            qDebug() << "Client Message Recieved";
+            handleHonestInitiator(socket);
+            break;
     }
 }
 
@@ -202,7 +209,17 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     environment->set_T(t);
     environment->print_environment();
 
-
-
     qDebug() << "Dealer Transaction Complete";
+}
+
+void DISEServer::handleClient(QTcpSocket* socket)
+{
+    qDebug() << "Client Transaction Complete";
+    socket->close();
+}
+
+void DISEServer::handleHonestInitiator(QTcpSocket* socket)
+{
+    qDebug() << "Honest Initiator Transaction Complete";
+    socket->close();
 }
