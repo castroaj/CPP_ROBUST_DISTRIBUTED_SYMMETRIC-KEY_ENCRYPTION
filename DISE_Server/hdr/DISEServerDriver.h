@@ -12,6 +12,7 @@
     #include <tuple>
     #include "Qt.h"
     #include <string>
+    #include <unistd.h>
 #endif
 
 #ifdef _OPENMP

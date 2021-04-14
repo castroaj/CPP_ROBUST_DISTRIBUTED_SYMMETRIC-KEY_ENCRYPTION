@@ -8,7 +8,7 @@
         public:
             explicit Client(bool debug, QObject *parent = nullptr);
             ~Client();
-            void doConnect(QString ip, int port, QString message);
+            void doConnect(QString ip, int port, unsigned int encMode, QString message);
             
         Q_SIGNALS:
             //void sendMesssage();

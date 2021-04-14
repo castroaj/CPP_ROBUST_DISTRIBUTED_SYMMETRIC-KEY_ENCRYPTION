@@ -10,7 +10,7 @@ Client::~Client()
 {
 }
 
-void Client::doConnect(QString ip, int port, QString message)
+void Client::doConnect(QString ip, int port, unsigned int encMode, QString message)
 {
     socket = new QTcpSocket(this);
 
@@ -28,111 +28,117 @@ void Client::doConnect(QString ip, int port, QString message)
     {
         qDebug() << "Connected to " << ip << port;
 
-        // // Gather information from key_gen object
-        // auto omega_matrix = key_gen->get_ref_to_omega_matrix();
-        // auto key_list = key_gen->get_ref_to_key_list();
-        // auto omega_table_size = key_gen->get_size_of_omega_table();
-        // auto key_count_per_machine = key_gen->get_key_count_per_machine();
-        // auto key_size = key_gen->get_size_of_each_key();
-        // auto n = key_gen->get_n();
-        // auto t = key_gen->get_t();
-
-        socket->write("1");
-
-        // QString isReady = socket->read(5);
+        socket->write("1"); // Client
 
         // Create a data stream to the socket
         QByteArray block;
         QDataStream out(&block, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_5);
 
-        qDebug() << "Writing this message: " << message;
+        if (encMode == 1)
+        {
+            qDebug() << "Decrypting this message: " << message;
+        }
+        else
+        {
+            qDebug() << "Encrypting this message: " << message;
+        }
 
-        // ///////////////////////////////////////////////////////////////////
+        // Write encryption mode 
+        out << uint32_t(encMode);
 
-        // // Write size of omega_table to socket
-        // out << uint32_t(omega_table_size);
-        
-        // // Write omega table to socket
-        // for (int i=0; i < omega_table_size; i++)
-        //     out << omega_matrix[i];
-        
-        
-        // ///////////////////////////////////////////////////////////////////
+        // Write size of message
+        out << message.size(); 
+        const QChar* messageToWrite = message.data();
+        for (int i = 0; i < message.size(); i++)
+        {
+            out << messageToWrite[i];
+        }
 
-        // // Write key count and size to socket
-        // out << uint32_t(key_count_per_machine);
-        // out << uint32_t(key_size);
+        // Write total size of the message
+        QByteArray totalSize;
+        QDataStream outSize(&totalSize, QIODevice::WriteOnly);
+        outSize.setVersion(QDataStream::Qt_4_5);
 
-        // // Write N and T to socket
-        // out << uint32_t(n);
-        // out << uint32_t(t);
+        outSize << block.size();
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
 
-        // // Write keys associated with the machine to the socket
-        // for (int i = 0; i < key_count_per_machine; i++)
-        // {
-        //     // Get the index of the next key for the current machine
-        //     int key_index = omega_matrix[i + (machine_num * key_count_per_machine)];
-        //     unsigned char* key = key_list->at(key_index);
+        // Write the full message buffered
+        char* data = block.data();
 
-        //     for (int j=0; j < key_size; j++)
-        //         out << key[j];
-        // }
+        int maxWrite = 30000;
 
-        // //////////////////////////////////////////////////////////////////
+        int bytesWritten = 0;
+        while (bytesWritten < block.size())
+        {
+            // if we have less bytes remaining to write than the max size
+            if (block.size()- bytesWritten < maxWrite)
+            {
+                maxWrite = block.size() - bytesWritten;
+            }
 
-        // // Write ip addresses and ports sepertated by a :
-        // // machine identifier
-        // out << uint32_t(machine_num);
-        // // Amount of addresses
-        // out << uint32_t(addresses->size());
-        // // Size of each address
-        // out << uint32_t(addresses->at(0).size());
+            // write to server
+            bytesWritten += socket->write(data + bytesWritten, maxWrite);
+            socket->flush();
+            socket->waitForBytesWritten(1000);
+        }
 
-        // // Write out the addresses
-        // for (int i = 0; i < addresses->size(); i++)
-        // {
-        //     const QChar* address = addresses->at(i).data();
-        //     for (int j = 0; j < addresses->at(i).size(); j++)
-        //         out << address[j];
-        // }
+        qDebug() << "Wrote: " << QString::number(bytesWritten) + " to Honest Initiator";
 
-        // ///////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////
 
-        // QByteArray totalSize;
-        // QDataStream outSize(&totalSize, QIODevice::WriteOnly);
-        // outSize.setVersion(QDataStream::Qt_4_5);
+        // Wait for results from DISE Servers
+        socket->waitForReadyRead();
+        QByteArray totalSizeBuffer = socket->read(sizeof(int));
+        QDataStream tsDs(totalSizeBuffer);
 
-        // outSize << block.size();
-        // socket->write(totalSize);
-        // socket->flush();
-        // socket->waitForBytesWritten(1000);
+        int totalReadSize = 0;
+        tsDs >> totalReadSize;
 
-        // char* data = block.data();
+        // Create a data stream to read from the socket
+        QByteArray resultsBuffer;
+        QByteArray tmpBuffer;
 
-        // int maxWrite = 30000;
+        while (resultsBuffer.size() < totalReadSize)
+        {
+            socket->waitForReadyRead();
+            tmpBuffer = socket->read(30000);
+            resultsBuffer.append(tmpBuffer);
+        }
 
-        // int bytesWritten = 0;
-        // while (bytesWritten < block.size())
-        // {
-        //     // if we have less bytes remaining to write than the max size
-        //     if (block.size()- bytesWritten < maxWrite)
-        //     {
-        //         maxWrite = block.size() - bytesWritten;
-        //     }
+        QDataStream ds(resultsBuffer);
 
-        //     // write to server
-        //     bytesWritten += socket->write(data + bytesWritten, maxWrite);
-        //     socket->flush();
-        //     socket->waitForBytesWritten(1000);
-        // }
-
-        // qDebug() << "The number of bytes written is: " << bytesWritten;
-
-        // socket->waitForReadyRead(3000);
-        // QString complete = socket->readAll();
-        // qDebug() << complete;
         socket->close();
+
+        // Flag to see if there was a compromised server
+        int robustFlag = 0;
+        ds >> robustFlag;
+
+        // Return Message
+        int sizeOfReturnMessage = 0;
+        ds >> sizeOfReturnMessage;
+
+        QString returnMessage;
+        for (int i = 0; i < sizeOfReturnMessage; i++)
+        {
+            QChar ch;
+            ds >> ch;
+            returnMessage.append(ch);
+        }
+
+        if (robustFlag == 0)
+        {
+            qDebug() << "All partipant servers returned the correct results";
+        }
+        else
+        {
+            qDebug() << "There was a compromised partipant server in the transaction";
+        }
+
+        qDebug() << "Resulting message: " << returnMessage;
+
     }
     else
     {
@@ -161,11 +167,5 @@ void Client::bytesWritten(qint64 bytes)
 void Client::readyRead()
 {
     if (debug)
-    {
         qDebug() << "reading...";
-
-        // read the data from the socket
-        QString s = socket->readAll();
-        qDebug() << s;
-    }
 }

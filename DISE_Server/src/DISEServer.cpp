@@ -67,7 +67,7 @@ void DISEServer::readSocket()
             handleClient(socket);
             break;
         case 2: // HONEST INITIATOR MESSAGE
-            qDebug() << "Client Message Recieved";
+            qDebug() << "Honest Initiator Message Recieved";
             handleHonestInitiator(socket);
             break;
     }
@@ -214,12 +214,123 @@ void DISEServer::handleDealer(QTcpSocket* socket)
 
 void DISEServer::handleClient(QTcpSocket* socket)
 {
-    qDebug() << "Client Transaction Complete";
+    QByteArray totalSizeBuffer = socket->read(sizeof(int));
+    QDataStream tsDs(totalSizeBuffer);
+
+    int totalSize = 0;
+    tsDs >> totalSize;
+
+    // Create a data stream to read from the socket
+    QByteArray buffer;
+    QByteArray tmpBuffer;
+
+    while (buffer.size() < totalSize)
+    {
+        socket->waitForReadyRead(1000);
+        tmpBuffer = socket->read(30000);
+        buffer.append(tmpBuffer);
+    }
+
+    QDataStream ds(buffer);
+
+    // Get encryption mode
+    int encMode = 0;
+    ds >> encMode;
+
+    int sizeOfMessage = 0;
+    ds >> sizeOfMessage;
+
+    QString message;
+    for (int i = 0; i < sizeOfMessage; i++)
+    {
+        QChar ch;
+        ds >> ch;
+        message.append(ch);
+    }
+
+    if (encMode == 1)
+    {
+        qDebug() << "Decrypting this message: " << message;
+    }
+    else
+    {
+        qDebug() << "Encrypting this message: " << message;
+    }
+
+    ///////////////////////////////////////////////////////////////////
+
+    // Decide combination of t other participant servers
+    // Decide what keys will be used by each server
+    // Fork or thread communication to other partipants
+    // Do the honest init keys
+    // Accumulate all partial results
+    // robustness check
+    // xor all partial results
+
+    // simulate work
+    usleep(10);
+
+    ///////////////////////////////////////////////////////////////////
+
+    // Build return message
+    QString result = message.toUpper();
+    int robustFlag = 0;
+
+    QByteArray writeBuffer;
+    QDataStream out(&writeBuffer, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_5);
+
+    // Robust flag 0 all servers honest 1 there was a dishonest partipant
+    out << uint32_t(robustFlag);
+
+    // Write size of enc/dec message and the enc/dec message
+    out << result.size();
+    const QChar* messageToWrite = result.data();
+    for (int i = 0; i < result.size(); i++)
+    {
+        out << messageToWrite[i];
+    }
+    
+    // Write Total Size
+    QByteArray totalWriteSize;
+    QDataStream outSize(&totalWriteSize, QIODevice::WriteOnly);
+    outSize.setVersion(QDataStream::Qt_4_5);
+
+    outSize << writeBuffer.size();
+
+    socket->write(totalWriteSize);
+    socket->flush();
+    socket->waitForBytesWritten(1000);
+
+    // Write Return Message
+    char* data = writeBuffer.data();
+
+    int maxWrite = 30000;
+
+    int bytesWritten = 0;
+    while (bytesWritten < writeBuffer.size())
+    {
+        // if we have less bytes remaining to write than the max size
+        if (writeBuffer.size()- bytesWritten < maxWrite)
+        {
+            maxWrite = writeBuffer.size() - bytesWritten;
+        }
+
+        // write to client
+        bytesWritten += socket->write(data + bytesWritten, maxWrite);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+    }
+
+    qDebug() << "Wrote: " << bytesWritten << " to Client";
+
     socket->close();
+    qDebug() << "Client Transaction Complete";
 }
 
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 {
-    qDebug() << "Honest Initiator Transaction Complete";
+
     socket->close();
+    qDebug() << "Honest Initiator Transaction Complete";
 }

@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
     if (debug)
         qDebug() << "Honest initiator: " << ip << " " << port.toInt();
 
-    client->doConnect(ip, port.toInt(), message);
+    client->doConnect(ip, port.toInt(), environment->get_enc_mode(), message);
 
     std::cout << "Client Finished" << std::endl;
 }
