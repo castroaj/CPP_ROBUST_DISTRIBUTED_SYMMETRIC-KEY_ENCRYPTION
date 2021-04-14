@@ -9,18 +9,18 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode)
     switch (dist_mode)
     {
         case 0: // SMALL CASE
-                n = 5;
-                t = 3;
-                break;
+            n = 5;
+            t = 3;
+            break;
         case 1: // LARGER CASE
-                n = 24;
-                t = 16;
-                break;
+            n = 24;
+            t = 16;
+            break;
     }
 
     key_size = 32;
-    key_count = nChoosek(n, t-1);
-    key_count_per_machine = nChoosek(n-1, t-1);
+    key_count_per_machine = nChoosek(n - 1, t - 1);
+    key_count = (key_count_per_machine * n) / t;
     key_idx = 0;
     omega_col_idxs = (int*) calloc(n, sizeof(int));
     omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
