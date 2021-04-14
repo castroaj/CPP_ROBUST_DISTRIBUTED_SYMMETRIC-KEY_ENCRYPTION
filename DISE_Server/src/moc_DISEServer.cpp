@@ -9,6 +9,7 @@
 #include "../hdr/DISEServer.h"
 #include <QtCore/qbytearray.h>
 #include <QtCore/qmetatype.h>
+#include <QtCore/QList>
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'DISEServer.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 67
@@ -21,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_DISEServer_t {
-    QByteArrayData data[12];
-    char stringdata0[148];
+    QByteArrayData data[17];
+    char stringdata0[251];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -42,13 +43,21 @@ QT_MOC_LITERAL(7, 75, 10), // "readSocket"
 QT_MOC_LITERAL(8, 86, 13), // "discardSocket"
 QT_MOC_LITERAL(9, 100, 12), // "handleDealer"
 QT_MOC_LITERAL(10, 113, 12), // "handleClient"
-QT_MOC_LITERAL(11, 126, 21) // "handleHonestInitiator"
+QT_MOC_LITERAL(11, 126, 21), // "handleHonestInitiator"
+QT_MOC_LITERAL(12, 148, 24), // "getParticipantServerList"
+QT_MOC_LITERAL(13, 173, 11), // "QList<int>*"
+QT_MOC_LITERAL(14, 185, 26), // "getParticipantServerKeyMap"
+QT_MOC_LITERAL(15, 212, 21), // "QMap<int,QSet<int>*>*"
+QT_MOC_LITERAL(16, 234, 16) // "partipantServers"
 
     },
     "DISEServer\0newMessage\0\0newConnection\0"
     "appendToSocketList\0QTcpSocket*\0socket\0"
     "readSocket\0discardSocket\0handleDealer\0"
-    "handleClient\0handleHonestInitiator"
+    "handleClient\0handleHonestInitiator\0"
+    "getParticipantServerList\0QList<int>*\0"
+    "getParticipantServerKeyMap\0"
+    "QMap<int,QSet<int>*>*\0partipantServers"
 };
 #undef QT_MOC_LITERAL
 
@@ -58,7 +67,7 @@ static const uint qt_meta_data_DISEServer[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+      10,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -66,16 +75,18 @@ static const uint qt_meta_data_DISEServer[] = {
        1,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   54,    2, 0x06 /* Public */,
+       1,    1,   64,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       3,    0,   57,    2, 0x08 /* Private */,
-       4,    1,   58,    2, 0x08 /* Private */,
-       7,    0,   61,    2, 0x08 /* Private */,
-       8,    0,   62,    2, 0x08 /* Private */,
-       9,    1,   63,    2, 0x08 /* Private */,
-      10,    1,   66,    2, 0x08 /* Private */,
-      11,    1,   69,    2, 0x08 /* Private */,
+       3,    0,   67,    2, 0x08 /* Private */,
+       4,    1,   68,    2, 0x08 /* Private */,
+       7,    0,   71,    2, 0x08 /* Private */,
+       8,    0,   72,    2, 0x08 /* Private */,
+       9,    1,   73,    2, 0x08 /* Private */,
+      10,    1,   76,    2, 0x08 /* Private */,
+      11,    1,   79,    2, 0x08 /* Private */,
+      12,    0,   82,    2, 0x08 /* Private */,
+      14,    1,   83,    2, 0x08 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QString,    2,
@@ -88,6 +99,8 @@ static const uint qt_meta_data_DISEServer[] = {
     QMetaType::Void, 0x80000000 | 5,    6,
     QMetaType::Void, 0x80000000 | 5,    6,
     QMetaType::Void, 0x80000000 | 5,    6,
+    0x80000000 | 13,
+    0x80000000 | 15, 0x80000000 | 13,   16,
 
        0        // eod
 };
@@ -106,6 +119,10 @@ void DISEServer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 5: _t->handleDealer((*reinterpret_cast< QTcpSocket*(*)>(_a[1]))); break;
         case 6: _t->handleClient((*reinterpret_cast< QTcpSocket*(*)>(_a[1]))); break;
         case 7: _t->handleHonestInitiator((*reinterpret_cast< QTcpSocket*(*)>(_a[1]))); break;
+        case 8: { QList<int>* _r = _t->getParticipantServerList();
+            if (_a[0]) *reinterpret_cast< QList<int>**>(_a[0]) = std::move(_r); }  break;
+        case 9: { QMap<int,QSet<int>*>* _r = _t->getParticipantServerKeyMap((*reinterpret_cast< QList<int>*(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QMap<int,QSet<int>*>**>(_a[0]) = std::move(_r); }  break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -181,13 +198,13 @@ int DISEServer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 10)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 10;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 8)
+        if (_id < 10)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 10;
     }
     return _id;
 }

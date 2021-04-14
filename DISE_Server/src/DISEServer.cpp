@@ -126,6 +126,10 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     }
 
     // Read in the size of the key list
+    int totalAmountOfKeys = 0;
+    ds >> totalAmountOfKeys;
+
+    // Read in the size of the key list
     int sizeOfKeyList = 0;
     ds >> sizeOfKeyList;
 
@@ -174,7 +178,7 @@ void DISEServer::handleDealer(QTcpSocket* socket)
         addresses->append(new QPair<QString, int>(ip, port));
     }
 
-    // // Create QMAP that maps a keyID to Key
+    // Create QMAP that maps a keyID to Key
     QMap<int, unsigned char*>* keyListMap = new QMap<int, unsigned char*>();
     for (int i = 0; i < sizeOfKeyList; i++)
     {
@@ -188,17 +192,25 @@ void DISEServer::handleDealer(QTcpSocket* socket)
 
     free(keyList);
 
-    QMap<int, int*>* omegaMap = new QMap<int, int*>();
+    QMap<int, QSet<int>*>* omegaMap = new QMap<int, QSet<int>*>();
     
+    // n rows in the omega matrix
     for (int i = 0; i < n; i++)
     {
-        int* omegaRow = (int *) malloc(sizeOfKeyList * sizeof(int));
-        std::memcpy(omegaRow, omegaMatrix + (sizeOfKeyList * i), sizeOfKeyList * sizeof(int));
+        QSet<int>* omegaRow = new QSet<int>();
+        // int* omegaRow = (int *) malloc(sizeOfKeyList * sizeof(int));
+        // std::memcpy(omegaRow, omegaMatrix + (sizeOfKeyList * i), sizeOfKeyList * sizeof(int));
+        for (int j = 0; j < sizeOfKeyList; j++)
+        {
+            int keyId = *(omegaMatrix + ((sizeOfKeyList * i) + j));
+            omegaRow->insert(keyId);
+        }
         
         omegaMap->insert(i, omegaRow);
     }
 
     // Save references into enviorment
+    environment->set_total_key_num(totalAmountOfKeys);
     environment->set_machine_num(machineNumber);
     environment->set_keys_per_machine(sizeOfKeyList);
     environment->set_size_of_each_key(sizeOfEachKey);
@@ -259,8 +271,38 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     ///////////////////////////////////////////////////////////////////
 
-    // Decide combination of t other participant servers
+    // get paripant servers
+    QList<int>* participantServers = getParticipantServerList();
+
+    qDebug() << "Random participants: " << *participantServers;
+
     // Decide what keys will be used by each server
+    QMap<int, QSet<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+
+    std::cout << "\tKEYS TO BE USED BY EACH SERVER" << std::endl;
+    if (environment->get_N() != 24)
+    {
+        // iterate through n machines held keys
+        QMap<int, QSet<int>*>::iterator serverIter;
+        for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
+        {
+            std::cout << "\t" << serverIter.key() << ": ";
+
+            // print key values in omega row
+            QSet<int>* keysToUse = serverIter.value();
+            QSet<int>::iterator keyIter;
+
+            for (keyIter = keysToUse->begin(); keyIter != keysToUse->end(); ++keyIter)
+                std::cout << *keyIter << " ";
+            
+            std::cout << "\n";
+        }
+    }
+    else
+    {
+        std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
+    }
+
     // Fork or thread communication to other partipants
     // Do the honest init keys
     // Accumulate all partial results
@@ -333,4 +375,112 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 
     socket->close();
     qDebug() << "Honest Initiator Transaction Complete";
+}
+
+QList<int>* DISEServer::getParticipantServerList()
+{
+    // Random combination of t other participant servers
+    QList<int>* partipantServerNumbers = new QList<int>();
+    // Populate list of server options
+    QList<int>* serverOptions = new QList<int>();
+    for (int i = 0; i < environment->get_N(); i++)
+    {
+        // contains every server excluding the honest initiator
+        if (i != environment->get_machine_num())
+        {
+            serverOptions->append(i);
+        }
+    }
+
+    // select participants randomly
+    srand(time(NULL));
+    for (int i = 0; i < environment->get_T(); i++)
+    {
+        int partipantIndex = rand() % serverOptions->size();
+        partipantServerNumbers->append(serverOptions->at(partipantIndex));
+        serverOptions->removeAt(partipantIndex);
+    }
+
+    // Free memory
+    delete serverOptions;
+
+    return partipantServerNumbers;
+}
+
+QMap<int, QSet<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* participantServers)
+{
+
+    QMap<int, QSet<int>*>* serverKeysToUse = new QMap<int, QSet<int>*>();
+    QMap<int, int>* numberOfKeysAssigned = new QMap<int, int>();
+    
+    // Zero out the num keys assigned
+    for (int i = 0; i < participantServers->size(); i++)
+    {
+        numberOfKeysAssigned->insert(participantServers->at(i), 0);
+        serverKeysToUse->insert(participantServers->at(i), new QSet<int>());
+    }
+
+    int honestInit = environment->get_machine_num();
+
+    // Go through each key to decide what machines will use what key
+    for (int keyId = 0; keyId < environment->get_total_key_num(); keyId++)
+    {
+        // if the honest doesn't own this key assign it to two servers
+        if (!environment->server_owns_key(honestInit, keyId))
+        {
+            // Assign the key to the two servers with the least keys that hold the key
+            int firstLeastKeysAssigned = INT_MIN;
+            int firstLeastKeysAssignedId = INT_MIN;
+            int secondLeastKeysAssigned = INT_MIN;
+            int secondLeastKeysAssignedId = INT_MIN;
+            // for each partipating server
+            for (int i = 0; i < participantServers->size(); i++)
+            {
+                if (environment->server_owns_key(participantServers->at(i), keyId))
+                {
+                    int numKeysAssigned = numberOfKeysAssigned->value(participantServers->at(i));
+                    if (firstLeastKeysAssigned == INT_MIN) // First least keys unset
+                    {
+                        firstLeastKeysAssigned = numKeysAssigned;
+                        firstLeastKeysAssignedId = participantServers->at(i);
+                    }
+                    else if (secondLeastKeysAssigned) // Second Least unset
+                    {
+                        secondLeastKeysAssigned = numKeysAssigned;
+                        secondLeastKeysAssignedId = participantServers->at(i);
+                    }
+                    else
+                    {
+                        if (numKeysAssigned > secondLeastKeysAssigned && numKeysAssigned > firstLeastKeysAssigned)
+                        {
+                            secondLeastKeysAssigned = firstLeastKeysAssigned;
+                            secondLeastKeysAssignedId = firstLeastKeysAssignedId;
+                            firstLeastKeysAssigned = numKeysAssigned;
+                            firstLeastKeysAssignedId = participantServers->at(i);
+                        }
+                        else if (numKeysAssigned > secondLeastKeysAssigned)
+                        {
+                            secondLeastKeysAssigned = numKeysAssigned;
+                            secondLeastKeysAssignedId = participantServers->at(i);
+                        }
+                    }
+                }
+            }
+
+            // update the num keys assigned
+            int newAmountOfKeysHeld = numberOfKeysAssigned->value(firstLeastKeysAssignedId);
+            numberOfKeysAssigned->insert(firstLeastKeysAssignedId, newAmountOfKeysHeld++);
+            newAmountOfKeysHeld = numberOfKeysAssigned->value(secondLeastKeysAssignedId);
+            numberOfKeysAssigned->insert(secondLeastKeysAssignedId, newAmountOfKeysHeld++);
+
+            // Assign keys
+            // std::cout << "(" << firstLeastKeysAssignedId << " " << secondLeastKeysAssignedId << " " << keyId << ") " << std::flush;
+            QSet<int>* curKeysFirst = serverKeysToUse->value(firstLeastKeysAssignedId);
+            QSet<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
+            curKeysFirst->insert(keyId);
+            curKeysSecond->insert(keyId);
+        }
+    }
+
+    return serverKeysToUse;
 }

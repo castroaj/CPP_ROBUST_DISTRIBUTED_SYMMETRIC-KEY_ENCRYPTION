@@ -51,13 +51,6 @@ bool setup_env_with_conf(std::string cFilePath, Environment* enviorment)
                         #endif
                         break;
                     }
-                // Set distribution mode for the dealing process
-                case hash("DISTRIBUTION_MODE"):
-                    {
-                        value = line.substr(delimPos + 1);
-                        enviorment->set_dist_mode(atoi(value.c_str()));
-                        break;
-                    }
                 default:
                     {
                         value = line.substr(delimPos + 1);

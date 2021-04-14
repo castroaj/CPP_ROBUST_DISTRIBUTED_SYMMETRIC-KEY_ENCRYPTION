@@ -26,6 +26,7 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode)
     omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
     create_all_key_list();
     generate_omega_matrix();
+    // print_omega_table();
 }
 
 KeyGenerator::~KeyGenerator()
@@ -53,7 +54,6 @@ void KeyGenerator::print_key_generator()
     cout << "Key Count: " << key_count << endl;
     cout << "Key Size: " << key_size << endl;
     cout << "Keys Per Machine:" << key_count_per_machine << endl;
-
 
     cout << "All Keys: " << endl;
 

@@ -14,8 +14,8 @@ void Environment::print_environment()
 
     cout << "ENVIRONMENT:" << endl;
     cout << "\tThread Count: " << threadCount << endl;
-    cout << "\tDistribution mode: " << distMode << endl;
     cout << "\tMachineNum: " << machineNum << endl;
+    cout << "\tTotalKeys: " << totalKeyNum << endl;
     cout << "\tKeysPerMachine: " << keysPerMachine << endl;
     cout << "\tSizeOfEachKey: " << sizeOfEachKey << endl;
     cout << "\tN: " << N << endl;
@@ -55,17 +55,18 @@ void Environment::print_environment()
     cout << "\tOMEGA MATRIX" << endl;
     if (N != 24)
     {
-        QMapIterator<int, int*> iter2(*omegaTable);
-
-        while (iter2.hasNext())
+        // iterate through n machines held keys
+        QMap<int, QSet<int>*>::iterator rowIter;
+        for (rowIter = omegaTable->begin(); rowIter != omegaTable->end(); ++rowIter)
         {
-            iter2.next();
-            std::cout << "\t" << iter2.key() << ": ";
+            std::cout << "\t" << rowIter.key() << ": ";
 
-            int* v = iter2.value();
+            // print key values in omega row
+            QSet<int>* omegaRow = rowIter.value();
+            QSet<int>::iterator keyIter;
 
-            for (int i = 0; i < keysPerMachine; i++)
-                printf("%d ", *(v + i));
+            for (keyIter = omegaRow->begin(); keyIter != omegaRow->end(); ++keyIter)
+                std::cout << *keyIter << " ";
             
             std::cout << "\n";
         }
@@ -74,4 +75,9 @@ void Environment::print_environment()
     {
         cout << "\t\tMATRIX RECIEVED IS TOO BIG TO PRINT" << endl;
     }
+}
+
+bool Environment::server_owns_key(int server, int keyId)
+{
+    return omegaTable->contains(server) && omegaTable->value(server)->contains(keyId);
 }

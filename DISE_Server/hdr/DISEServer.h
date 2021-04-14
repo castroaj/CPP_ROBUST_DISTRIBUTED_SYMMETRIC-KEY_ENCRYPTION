@@ -21,6 +21,8 @@
             void handleDealer(QTcpSocket* socket);
             void handleClient(QTcpSocket* socket);
             void handleHonestInitiator(QTcpSocket* socket);
+            QList<int>* getParticipantServerList();
+            QMap<int, QSet<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
         
         private:
             QTcpServer* m_server;
