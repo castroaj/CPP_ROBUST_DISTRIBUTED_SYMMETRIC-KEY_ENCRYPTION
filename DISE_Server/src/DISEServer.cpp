@@ -305,7 +305,6 @@ void DISEServer::handleClient(QTcpSocket* socket)
         std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
     }
 
-
     // Set up shared partial results int keyId QByteArray encryption result
     qDebug() << "Honest Initiator Creating Threads";
     QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
@@ -321,7 +320,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     // Encrypt the honest init keys
     QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
-    QMap<int, unsigned char*>* honestPartialResults = encryptDecrpytWithKeys(honestKeysToUse, message, sizeOfMessage, encMode);
+    // QMap<int, unsigned char*>* honestPartialResults = encryptDecrpytWithKeys(honestKeysToUse, message, sizeOfMessage, encMode);
     // TODO
     // add all results into a global partial results map protected by mutex, threads will also do this
 
@@ -334,6 +333,26 @@ void DISEServer::handleClient(QTcpSocket* socket)
     qDebug() << "Threads Joined";
     // Free memory
     threadVector.clear();
+
+    // TODO **** Test for enc and dec
+    // remove this is just for testing enc and dec
+    // int testMsgToEncSize = 5;
+    // unsigned char* testMsgToEnc = (unsigned char *)malloc(testMsgToEncSize);
+    // for (int i = 0; i < testMsgToEncSize)
+    // {
+    //     testMsgToEncSize[i] = 'a';
+    // }
+    // unsigned char* encMsg;
+    // unsigned char* decMsg;
+    // unsigned char* keyToUse = environment->get_ref_to_key_list()->value(honestKeysToUse->at(0));
+    // int keySize = environment->get_size_of_each_key();
+    // int encSize = encrypt(testMsgToEnc, testMsgToEncSize, keyToUse, keySize, encMsg);
+    // int decSize = decrypt(testMsgToEnc, testMsgToEncSize, keyToUse, keySize, decMsg);
+    // qDebug() << encSize;
+    // qDebug() << decSize;
+    // qDebug() << "size??";
+    // check msg
+    // End remove section
 
     qDebug() << "Honest Initiator xoring results and checking robustness";
     // xor all partial results to get the final result
@@ -497,86 +516,55 @@ int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, 
 {
     
     unsigned char iv[keySize];
+    memset(iv, 0, keySize);
+    int encLen = 0;
+    int finalLen = 0;
 
-    // https://github.com/saju/misc/blob/master/misc/openssl_aes.c
-    // and pa2 from 457
+    // create context
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
 
-    // // no salt used
-    // int keySize = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha256(), NULL, key, keySize, 14, iv);
+    // init encryption operation
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
 
-    // int c_len = *len + AES_BLOCK_SIZE, f_len = 0;
-    // int status ;
-    // unsigned len=0 , encryptedLen=0 ;
+    // update the encrypted message
+    EVP_EncryptUpdate(ctx, message, &encLen, encryptedMessage, msgLen);
 
-    // /* Create and initialise the context */
-    // EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
-    // if( ! ctx )
-    //     handleErrors("encrypt: failed to creat CTX");
+    // finilize the encryption
+    EVP_EncryptFinal_ex(ctx, message + encLen, &finalLen);
 
-    // // Initialise the encryption operation.
-    // status = EVP_EncryptInit_ex( ctx, ALGORITHM(), NULL, key, iv ) ;
-    // if( status != 1 )
-    //     handleErrors("encrypt: failed to EncryptInit_ex");
+    encLen += finalLen;
 
-    // // Call EncryptUpdate as many times as needed (e.g. inside a loop)
-    // // to perform regular encryption
-    // status = EVP_EncryptUpdate(ctx, pCipherText, &len, pPlainText, plainText_len) ;
-    // if( status != 1 )
-    //     handleErrors("encrypt: failed to EncryptUpdate");
-    // encryptedLen += len;
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
 
-    // // If additional ciphertext may still be generated,
-    // // the pCipherText pointer must be first advanced forward
-    // pCipherText += len ;
-
-    // // Finalize the encryption.
-    // status = EVP_EncryptFinal_ex( ctx, pCipherText , &len ) ;
-    // if( status != 1 )
-    //     handleErrors("encrypt: failed to EncryptFinal_ex");
-    // encryptedLen += len; // len could be 0 if no additional cipher text was generated
-
-    // /* Clean up */
-    // EVP_CIPHER_CTX_free(ctx);
-
-    return 0;
+    return encLen;
 }
 
 int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, int keySize, unsigned char* decryptedMessage) 
 {
 
-    // unsigned char iv[keySize];
-    // unsigned len = 0; 
-    // unsigned decryptedLen = 0;
+    unsigned char iv[keySize];
+    memset(iv, 0, keySize);
 
-    // /* Create and initialise the context */
-    // EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
+    int decLen = 0;
+    int finalLen = 0;
 
-    // // Initialise the decryption operation.
-    // status = EVP_DecryptInit_ex( ctx, EVP_aes_256_cbc(, NULL, key, iv ) ;
-    // if( status != 1 )
-    //     handleErrors("decrypt: failed to DecryptInit_ex");
+    // Create Context
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
-    // // Call DecryptUpdate as many times as needed (e.g. inside a loop)
-    // // to perform regular decryption
-    // status = EVP_DecryptUpdate( ctx, pDecryptedText, &len, pCipherText, cipherText_len) ;
-    // if( status != 1 )
-    //     handleErrors("decrypt: failed to DecryptUpdate");
-    // decryptedLen += len;
+    // initialize decription operation
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv );
 
-    // // If additionl decrypted text may still be generated,
-    // // the pDecryptedText pointer must be first advanced forward
-    // pDecryptedText += len ;
+    // update the decrypted message
+    EVP_DecryptUpdate(ctx, message, &decLen, decryptedMessage, msgLen);
 
-    // // Finalize the decryption.
-    // status = EVP_DecryptFinal_ex( ctx, pDecryptedText , &len ) ;
-    // if( status != 1 )
-    //     handleErrors("decrypt: failed to DecryptFinal_ex");
-    // decryptedLen += len;
+    // finilize the enc
+    EVP_DecryptFinal_ex(ctx, message + decLen, &finalLen);
 
-    // /* Clean up */
-    // EVP_CIPHER_CTX_free(ctx);
+    decLen += finalLen;
 
-    // return decryptedLen;
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
 
     return 0;
 }
