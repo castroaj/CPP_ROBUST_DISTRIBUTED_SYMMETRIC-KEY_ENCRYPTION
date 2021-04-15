@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_DISEServer_t {
-    QByteArrayData data[17];
-    char stringdata0[251];
+    QByteArrayData data[33];
+    char stringdata0[443];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -47,8 +47,24 @@ QT_MOC_LITERAL(11, 126, 21), // "handleHonestInitiator"
 QT_MOC_LITERAL(12, 148, 24), // "getParticipantServerList"
 QT_MOC_LITERAL(13, 173, 11), // "QList<int>*"
 QT_MOC_LITERAL(14, 185, 26), // "getParticipantServerKeyMap"
-QT_MOC_LITERAL(15, 212, 21), // "QMap<int,QSet<int>*>*"
-QT_MOC_LITERAL(16, 234, 16) // "partipantServers"
+QT_MOC_LITERAL(15, 212, 22), // "QMap<int,QList<int>*>*"
+QT_MOC_LITERAL(16, 235, 16), // "partipantServers"
+QT_MOC_LITERAL(17, 252, 21), // "honestInitiatorThread"
+QT_MOC_LITERAL(18, 274, 2), // "ip"
+QT_MOC_LITERAL(19, 277, 4), // "port"
+QT_MOC_LITERAL(20, 282, 9), // "keysToUse"
+QT_MOC_LITERAL(21, 292, 7), // "message"
+QT_MOC_LITERAL(22, 300, 7), // "encMode"
+QT_MOC_LITERAL(23, 308, 33), // "QMap<int,QList<unsigned char*..."
+QT_MOC_LITERAL(24, 342, 14), // "partialResults"
+QT_MOC_LITERAL(25, 357, 7), // "encrypt"
+QT_MOC_LITERAL(26, 365, 14), // "unsigned char*"
+QT_MOC_LITERAL(27, 380, 6), // "msgLen"
+QT_MOC_LITERAL(28, 387, 5), // "keyId"
+QT_MOC_LITERAL(29, 393, 7), // "keySize"
+QT_MOC_LITERAL(30, 401, 16), // "encryptedMessage"
+QT_MOC_LITERAL(31, 418, 7), // "decrypt"
+QT_MOC_LITERAL(32, 426, 16) // "decryptedMessage"
 
     },
     "DISEServer\0newMessage\0\0newConnection\0"
@@ -57,7 +73,12 @@ QT_MOC_LITERAL(16, 234, 16) // "partipantServers"
     "handleClient\0handleHonestInitiator\0"
     "getParticipantServerList\0QList<int>*\0"
     "getParticipantServerKeyMap\0"
-    "QMap<int,QSet<int>*>*\0partipantServers"
+    "QMap<int,QList<int>*>*\0partipantServers\0"
+    "honestInitiatorThread\0ip\0port\0keysToUse\0"
+    "message\0encMode\0QMap<int,QList<unsigned char*>*>*\0"
+    "partialResults\0encrypt\0unsigned char*\0"
+    "msgLen\0keyId\0keySize\0encryptedMessage\0"
+    "decrypt\0decryptedMessage"
 };
 #undef QT_MOC_LITERAL
 
@@ -67,7 +88,7 @@ static const uint qt_meta_data_DISEServer[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+      13,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -75,18 +96,21 @@ static const uint qt_meta_data_DISEServer[] = {
        1,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   64,    2, 0x06 /* Public */,
+       1,    1,   79,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       3,    0,   67,    2, 0x08 /* Private */,
-       4,    1,   68,    2, 0x08 /* Private */,
-       7,    0,   71,    2, 0x08 /* Private */,
-       8,    0,   72,    2, 0x08 /* Private */,
-       9,    1,   73,    2, 0x08 /* Private */,
-      10,    1,   76,    2, 0x08 /* Private */,
-      11,    1,   79,    2, 0x08 /* Private */,
-      12,    0,   82,    2, 0x08 /* Private */,
-      14,    1,   83,    2, 0x08 /* Private */,
+       3,    0,   82,    2, 0x08 /* Private */,
+       4,    1,   83,    2, 0x08 /* Private */,
+       7,    0,   86,    2, 0x08 /* Private */,
+       8,    0,   87,    2, 0x08 /* Private */,
+       9,    1,   88,    2, 0x08 /* Private */,
+      10,    1,   91,    2, 0x08 /* Private */,
+      11,    1,   94,    2, 0x08 /* Private */,
+      12,    0,   97,    2, 0x08 /* Private */,
+      14,    1,   98,    2, 0x08 /* Private */,
+      17,    6,  101,    2, 0x08 /* Private */,
+      25,    5,  114,    2, 0x08 /* Private */,
+      31,    5,  125,    2, 0x08 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QString,    2,
@@ -101,6 +125,9 @@ static const uint qt_meta_data_DISEServer[] = {
     QMetaType::Void, 0x80000000 | 5,    6,
     0x80000000 | 13,
     0x80000000 | 15, 0x80000000 | 13,   16,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int, 0x80000000 | 13, QMetaType::QString, QMetaType::Int, 0x80000000 | 23,   18,   19,   20,   21,   22,   24,
+    QMetaType::Int, 0x80000000 | 26, QMetaType::Int, QMetaType::Int, QMetaType::Int, 0x80000000 | 26,   21,   27,   28,   29,   30,
+    QMetaType::Int, 0x80000000 | 26, QMetaType::Int, QMetaType::Int, QMetaType::Int, 0x80000000 | 26,   21,   27,   28,   29,   32,
 
        0        // eod
 };
@@ -121,8 +148,13 @@ void DISEServer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 7: _t->handleHonestInitiator((*reinterpret_cast< QTcpSocket*(*)>(_a[1]))); break;
         case 8: { QList<int>* _r = _t->getParticipantServerList();
             if (_a[0]) *reinterpret_cast< QList<int>**>(_a[0]) = std::move(_r); }  break;
-        case 9: { QMap<int,QSet<int>*>* _r = _t->getParticipantServerKeyMap((*reinterpret_cast< QList<int>*(*)>(_a[1])));
-            if (_a[0]) *reinterpret_cast< QMap<int,QSet<int>*>**>(_a[0]) = std::move(_r); }  break;
+        case 9: { QMap<int,QList<int>*>* _r = _t->getParticipantServerKeyMap((*reinterpret_cast< QList<int>*(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< QMap<int,QList<int>*>**>(_a[0]) = std::move(_r); }  break;
+        case 10: _t->honestInitiatorThread((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< QList<int>*(*)>(_a[3])),(*reinterpret_cast< QString(*)>(_a[4])),(*reinterpret_cast< int(*)>(_a[5])),(*reinterpret_cast< QMap<int,QList<unsigned char*>*>*(*)>(_a[6]))); break;
+        case 11: { int _r = _t->encrypt((*reinterpret_cast< unsigned char*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3])),(*reinterpret_cast< int(*)>(_a[4])),(*reinterpret_cast< unsigned char*(*)>(_a[5])));
+            if (_a[0]) *reinterpret_cast< int*>(_a[0]) = std::move(_r); }  break;
+        case 12: { int _r = _t->decrypt((*reinterpret_cast< unsigned char*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3])),(*reinterpret_cast< int(*)>(_a[4])),(*reinterpret_cast< unsigned char*(*)>(_a[5])));
+            if (_a[0]) *reinterpret_cast< int*>(_a[0]) = std::move(_r); }  break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -198,13 +230,13 @@ int DISEServer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 13;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 10)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 13;
     }
     return _id;
 }

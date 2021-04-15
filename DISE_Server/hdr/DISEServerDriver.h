@@ -12,7 +12,9 @@
     #include <tuple>
     #include "Qt.h"
     #include <string>
-    #include <unistd.h>
+    #include <thread> 
+    #include <mutex> 
+    #include <openssl/evp.h>
 #endif
 
 #ifdef _OPENMP

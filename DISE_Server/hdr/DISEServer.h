@@ -22,13 +22,17 @@
             void handleClient(QTcpSocket* socket);
             void handleHonestInitiator(QTcpSocket* socket);
             QList<int>* getParticipantServerList();
-            QMap<int, QSet<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
-        
+            QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
+            void honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, QString message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults);
+            int encrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* encryptedMessage);
+            int decrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* decryptedMessage);
+
         private:
             QTcpServer* m_server;
             QSet<QTcpSocket*> connection_set;
             bool debug;
             int port;
             Environment* environment;
+            std::mutex mtx;
     };      
 #endif

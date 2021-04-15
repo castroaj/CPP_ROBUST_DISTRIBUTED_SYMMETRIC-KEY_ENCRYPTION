@@ -12,7 +12,7 @@ RUN apt-get update && \
         build-essential \
         libomp-dev \
         libssl-dev \
-        qt5-default
+        qt5-default 
 
 # copy the files
 COPY . /usr/src/DISE_Server

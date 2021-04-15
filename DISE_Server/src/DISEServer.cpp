@@ -277,23 +277,22 @@ void DISEServer::handleClient(QTcpSocket* socket)
     qDebug() << "Random participants: " << *participantServers;
 
     // Decide what keys will be used by each server
-    QMap<int, QSet<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
 
     std::cout << "\tKEYS TO BE USED BY EACH SERVER" << std::endl;
     if (environment->get_N() != 24)
     {
         // iterate through n machines held keys
-        QMap<int, QSet<int>*>::iterator serverIter;
+        QMap<int, QList<int>*>::iterator serverIter;
         for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
         {
             std::cout << "\t" << serverIter.key() << ": ";
 
             // print key values in omega row
-            QSet<int>* keysToUse = serverIter.value();
-            QSet<int>::iterator keyIter;
+            QList<int>* keysToUse = serverIter.value();
 
-            for (keyIter = keysToUse->begin(); keyIter != keysToUse->end(); ++keyIter)
-                std::cout << *keyIter << " ";
+            for (int i = 0; i < keysToUse->size(); i++)
+                std::cout << keysToUse->at(i) << " ";
             
             std::cout << "\n";
         }
@@ -303,21 +302,83 @@ void DISEServer::handleClient(QTcpSocket* socket)
         std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
     }
 
-    // Fork or thread communication to other partipants
-    // Do the honest init keys
-    // Accumulate all partial results
-    // robustness check
-    // xor all partial results
+    // Set up shared partial results int keyId QByteArray encryption result
+    qDebug() << "Honest Initiator Creating Threads";
+    QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
+    std::vector<std::thread> threadVector;
+    for (int i = 0; i < participantServers->size(); i++)
+    {
+        int serverId = participantServers->at(i);
+        QString ip = environment->get_ref_to_addresses()->value(serverId)->first;
+        int port = environment->get_ref_to_addresses()->value(serverId)->second;
+        QList<int>* keysToUse = serverKeysToUse->value(serverId);
+        threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, message, encMode, partialResultsMap); 
+    }
 
-    // simulate work
-    usleep(10);
+    // Encrypt the honest init keys
+    QSet<int>* honestKeys = environment->get_ref_to_omega_table()->value(environment->get_machine_num());
+    QSet<int>::iterator honestKeyIter;
 
-    ///////////////////////////////////////////////////////////////////
+    qDebug() << "Honest Initiator Encrypting";
+    for (honestKeyIter = honestKeys->begin(); honestKeyIter != honestKeys->end(); ++honestKeyIter)
+    {
+        // TODO
+        // call encrprypt with each key held by the honest init
+        // *honestKeyIter is the key to be passed
+    }
+
+    // Join Threads
+    qDebug() << "Honest Initiator Joining Threads";
+    for(auto& t: threadVector)
+    {
+        t.join();
+    }
+    qDebug() << "Threads Joined";
+    // Free memory
+    threadVector.clear();
+
+    qDebug() << "Honest Initiator xoring results and checking robustness";
+    // xor all partial results to get the final result
+    // and set robust flag checking if any of the results were not the same
+    unsigned char* result;
+    int robustFlag = 0;
+    // QMap<int, QList<unsigned char*>*>::iterator resultIter;
+    // for (resultIter = partialResultsMap->begin(); resultIter != partialResultsMap->end(); ++resultIter)
+    // {
+        // TODO
+        // issue here need to convert the map to either
+        // QMap<int, QList<QPair<unsigned char*, int>*>*>*
+        // keyId -> results for that key -> plainText, plainText size
+        // OR
+        // QMap<int, QList<QString>*>*
+        // and just send strings back
+        // idk this bit is very dependant on what the threads send and how enc / dec will work
+
+        // QList<unsigned char*>* partialResults = resultIter.value();
+        // char* msg = message.data();
+
+    //     // int cmp = memcmp(partialResults->at(0), partialResults->at(1), size));
+    //     // if (cmp == -1)
+    //     // {
+    //     //     robustFlag = 1;
+    //     // }
+
+        // xor partial and result assign to result
+        // TODO
+        // do the xor on each char a ^ b read into result
+        // issue here is to handle different lengths just an if 
+        // and the for loop goes to the longest result or new partial 
+        // but what do we do with leftover just save as is?
+    // }
+    
+    // TODO 
+    // temp remove and replace with actual result or turn result into a QString
+    QString finalResult = "Temp return result";
+
+    // ///////////////////////////////////////////////////////////////////
 
     // Build return message
-    QString result = message.toUpper();
-    int robustFlag = 0;
-
+    qDebug() << "Honest Initiator Sending Back Result";
     QByteArray writeBuffer;
     QDataStream out(&writeBuffer, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_5);
@@ -326,9 +387,9 @@ void DISEServer::handleClient(QTcpSocket* socket)
     out << uint32_t(robustFlag);
 
     // Write size of enc/dec message and the enc/dec message
-    out << result.size();
-    const QChar* messageToWrite = result.data();
-    for (int i = 0; i < result.size(); i++)
+    out << uint32_t(finalResult.size());
+    const QChar* messageToWrite = finalResult.data();
+    for (uint32_t i = 0; i < finalResult.size(); i++)
     {
         out << messageToWrite[i];
     }
@@ -368,10 +429,132 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     socket->close();
     qDebug() << "Client Transaction Complete";
+
+    // Free memory
+    // TODO
+    // Need to do this just about every where
+    // either calling delete, clear for simple maps,lists,sets, or qDeleteAll, clear for complex qdata types
+    qDeleteAll( *partialResultsMap );  //  deletes all the values stored in "map"
+    partialResultsMap->clear();        //  removes all items from the map
+}
+
+void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, QString message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults)
+{
+    qDebug() << "thread going";
+    // TODO write honest -> partipant thread
+    // Mutex untested but should be part of the object will protect partialResults
+    // Will write to ip, port -> "2", total msg size, amount of keys to use, each int key to use,
+    // size of the message, the message, the int enc mode
+    // WaitForReadyRead()
+    // Read back the partial results into shared partialResults map
+
+    // socket = new QTcpSocket(this);
+
+    // if (debug)
+    //     qDebug() << "connecting...";
+
+    // socket->connectToHost(ip, port);
+
+    // if(socket->waitForConnected(3000))
+    // {
+
+    // }
+    // else
+    // {
+    //     qDebug() << "Not connected";
+    // }
+}
+
+int DISEServer::encrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* encryptedMessage) {
+    unsigned char* key = environment->get_ref_to_key_list()->value(keyId);
+    unsigned char iv[keySize];
+
+    // https://github.com/saju/misc/blob/master/misc/openssl_aes.c
+    // and pa2 from 457
+
+    // // no salt used
+    // int keySize = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha256(), NULL, key, keySize, 14, iv);
+
+    // int c_len = *len + AES_BLOCK_SIZE, f_len = 0;
+    // int status ;
+    // unsigned len=0 , encryptedLen=0 ;
+
+    // /* Create and initialise the context */
+    // EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
+    // if( ! ctx )
+    //     handleErrors("encrypt: failed to creat CTX");
+
+    // // Initialise the encryption operation.
+    // status = EVP_EncryptInit_ex( ctx, ALGORITHM(), NULL, key, iv ) ;
+    // if( status != 1 )
+    //     handleErrors("encrypt: failed to EncryptInit_ex");
+
+    // // Call EncryptUpdate as many times as needed (e.g. inside a loop)
+    // // to perform regular encryption
+    // status = EVP_EncryptUpdate(ctx, pCipherText, &len, pPlainText, plainText_len) ;
+    // if( status != 1 )
+    //     handleErrors("encrypt: failed to EncryptUpdate");
+    // encryptedLen += len;
+
+    // // If additional ciphertext may still be generated,
+    // // the pCipherText pointer must be first advanced forward
+    // pCipherText += len ;
+
+    // // Finalize the encryption.
+    // status = EVP_EncryptFinal_ex( ctx, pCipherText , &len ) ;
+    // if( status != 1 )
+    //     handleErrors("encrypt: failed to EncryptFinal_ex");
+    // encryptedLen += len; // len could be 0 if no additional cipher text was generated
+
+    // /* Clean up */
+    // EVP_CIPHER_CTX_free(ctx);
+
+    return 0;
+}
+
+int DISEServer::decrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* decryptedMessage) {
+
+    // unsigned char* key = environment->get_ref_to_key_list()->value(keyId);
+    // unsigned char iv[keySize];
+    // unsigned len = 0; 
+    // unsigned decryptedLen = 0;
+
+    // /* Create and initialise the context */
+    // EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
+
+    // // Initialise the decryption operation.
+    // status = EVP_DecryptInit_ex( ctx, EVP_aes_256_cbc(, NULL, key, iv ) ;
+    // if( status != 1 )
+    //     handleErrors("decrypt: failed to DecryptInit_ex");
+
+    // // Call DecryptUpdate as many times as needed (e.g. inside a loop)
+    // // to perform regular decryption
+    // status = EVP_DecryptUpdate( ctx, pDecryptedText, &len, pCipherText, cipherText_len) ;
+    // if( status != 1 )
+    //     handleErrors("decrypt: failed to DecryptUpdate");
+    // decryptedLen += len;
+
+    // // If additionl decrypted text may still be generated,
+    // // the pDecryptedText pointer must be first advanced forward
+    // pDecryptedText += len ;
+
+    // // Finalize the decryption.
+    // status = EVP_DecryptFinal_ex( ctx, pDecryptedText , &len ) ;
+    // if( status != 1 )
+    //     handleErrors("decrypt: failed to DecryptFinal_ex");
+    // decryptedLen += len;
+
+    // /* Clean up */
+    // EVP_CIPHER_CTX_free(ctx);
+
+    // return decryptedLen;
+
+    return 0;
 }
 
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 {
+    // TODO
 
     socket->close();
     qDebug() << "Honest Initiator Transaction Complete";
@@ -407,17 +590,17 @@ QList<int>* DISEServer::getParticipantServerList()
     return partipantServerNumbers;
 }
 
-QMap<int, QSet<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* participantServers)
+QMap<int, QList<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* participantServers)
 {
 
-    QMap<int, QSet<int>*>* serverKeysToUse = new QMap<int, QSet<int>*>();
+    QMap<int, QList<int>*>* serverKeysToUse = new QMap<int, QList<int>*>();
     QMap<int, int>* numberOfKeysAssigned = new QMap<int, int>();
     
     // Zero out the num keys assigned
     for (int i = 0; i < participantServers->size(); i++)
     {
         numberOfKeysAssigned->insert(participantServers->at(i), 0);
-        serverKeysToUse->insert(participantServers->at(i), new QSet<int>());
+        serverKeysToUse->insert(participantServers->at(i), new QList<int>());
     }
 
     int honestInit = environment->get_machine_num();
@@ -475,12 +658,15 @@ QMap<int, QSet<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* partic
 
             // Assign keys
             // std::cout << "(" << firstLeastKeysAssignedId << " " << secondLeastKeysAssignedId << " " << keyId << ") " << std::flush;
-            QSet<int>* curKeysFirst = serverKeysToUse->value(firstLeastKeysAssignedId);
-            QSet<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
-            curKeysFirst->insert(keyId);
-            curKeysSecond->insert(keyId);
+            QList<int>* curKeysFirst = serverKeysToUse->value(firstLeastKeysAssignedId);
+            QList<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
+            curKeysFirst->append(keyId);
+            curKeysSecond->append(keyId);
         }
     }
+
+    // Free memory
+    delete numberOfKeysAssigned;
 
     return serverKeysToUse;
 }
