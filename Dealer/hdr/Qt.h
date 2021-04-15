@@ -15,4 +15,5 @@
     #include <QSet>
     #include <QStandardPaths>
     #include <QDataStream>
+    #include <QTextStream>
 #endif 

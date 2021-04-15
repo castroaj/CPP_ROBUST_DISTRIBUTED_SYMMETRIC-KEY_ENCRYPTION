@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
     QString port = l.at(1);
 
     if (debug)
-        qDebug() << "Honest initiator: " << ip << " " << port.toInt();
+        QTextStream(stdout) << "Honest initiator: " << ip << " " << port.toInt() << "\n";
 
     client->doConnect(ip, port.toInt(), environment->get_enc_mode(), message);
 

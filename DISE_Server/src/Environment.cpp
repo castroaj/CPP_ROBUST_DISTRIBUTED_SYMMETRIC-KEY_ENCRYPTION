@@ -27,7 +27,7 @@ void Environment::print_environment()
     {
         auto t = addresses->at(i);
 
-        qDebug() << "\t" << i << ": " << t->first << ":" << t->second;
+        QTextStream(stdout) << "\t" << i << ": " << t->first << ":" << t->second << "\n";
     }
 
     cout << "\tKEY LIST:" << endl;

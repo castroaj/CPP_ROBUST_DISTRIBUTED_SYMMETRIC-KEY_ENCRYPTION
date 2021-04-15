@@ -59,15 +59,15 @@ void DISEServer::readSocket()
     switch(code)
     {
         case 0: // DEALER MESSAGE
-            qDebug() << "Dealer Message Recieved";
+            QTextStream(stdout) << "Dealer Message Recieved" << "\n";
             handleDealer(socket);
             break;
         case 1: // CLIENT MESSAGE
-            qDebug() << "Client Message Recieved";
+            QTextStream(stdout) << "Client Message Recieved" << "\n";
             handleClient(socket);
             break;
         case 2: // HONEST INITIATOR MESSAGE
-            qDebug() << "Honest Initiator Message Recieved";
+            QTextStream(stdout) << "Honest Initiator Message Recieved" << "\n";
             handleHonestInitiator(socket);
             break;
     }
@@ -113,8 +113,8 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     int sizeOfOmegaMatrix = 0;
     ds >> sizeOfOmegaMatrix;
 
-    qDebug() << "Total Size Recieved " << buffer.size();
-    qDebug() << "Omega Matrix Size " << sizeOfOmegaMatrix;
+    QTextStream(stdout) << "Total Size Recieved " << buffer.size() << "\n";
+    QTextStream(stdout) << "Omega Matrix Size " << sizeOfOmegaMatrix << "\n";
 
     // Create the buffer for the Omega Matrix
     int* omegaMatrix = (int *) malloc(sizeOfOmegaMatrix * sizeof(int));
@@ -221,7 +221,7 @@ void DISEServer::handleDealer(QTcpSocket* socket)
     environment->set_T(t);
     environment->print_environment();
 
-    qDebug() << "Dealer Transaction Complete";
+    QTextStream(stdout) << "Dealer Transaction Complete" << "\n";
 }
 
 void DISEServer::handleClient(QTcpSocket* socket)
@@ -265,11 +265,11 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     if (encMode == 1)
     {
-        qDebug() << "Decrypting this message: " << messageString;
+        QTextStream(stdout) << "Decrypting this message: " << messageString << "\n";
     }
     else
     {
-        qDebug() << "Encrypting this message: " << messageString;
+        QTextStream(stdout) << "Encrypting this message: " << messageString << "\n";
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -277,7 +277,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // get paripant servers
     QList<int>* participantServers = getParticipantServerList();
 
-    qDebug() << "Random participants: " << *participantServers;
+    //QTextStream(stdout) << "Random participants: " << *participantServers << "\n";
 
     // Decide what keys will be used by each server
     QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
@@ -306,7 +306,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     }
 
     // Set up shared partial results int keyId QByteArray encryption result
-    qDebug() << "Honest Initiator Creating Threads";
+    QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
     QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
     std::vector<std::thread> threadVector;
     for (int i = 0; i < participantServers->size(); i++)
@@ -325,12 +325,12 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // add all results into a global partial results map protected by mutex, threads will also do this
 
     // Join Threads
-    qDebug() << "Honest Initiator Joining Threads";
+    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
     for(auto& t: threadVector)
     {
         t.join();
     }
-    qDebug() << "Threads Joined";
+    QTextStream(stdout) << "Threads Joined" << "\n";
     // Free memory
     threadVector.clear();
 
@@ -354,7 +354,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // check msg
     // End remove section
 
-    qDebug() << "Honest Initiator xoring results and checking robustness";
+    QTextStream(stdout) << "Honest Initiator xoring results and checking robustness" << "\n";
     // xor all partial results to get the final result
     // and set robust flag checking if any of the results were not the same
     unsigned char* result;
@@ -395,7 +395,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // ///////////////////////////////////////////////////////////////////
 
     // Build return message
-    qDebug() << "Honest Initiator Sending Back Result";
+    QTextStream(stdout) << "Honest Initiator Sending Back Result" << "\n";
     QByteArray writeBuffer;
     QDataStream out(&writeBuffer, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_5);
@@ -442,10 +442,10 @@ void DISEServer::handleClient(QTcpSocket* socket)
         socket->waitForBytesWritten(1000);
     }
 
-    qDebug() << "Wrote: " << bytesWritten << " to Client";
+    QTextStream(stdout) << "Wrote: " << bytesWritten << " to Client" << "\n";
 
     socket->close();
-    qDebug() << "Client Transaction Complete";
+    QTextStream(stdout) << "Client Transaction Complete" << "\n";
 
     // Free memory
     // TODO
@@ -457,7 +457,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
 void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults)
 {
-    qDebug() << "thread going";
+    QTextStream(stdout) << "thread going" << "\n";
     // TODO write honest -> partipant thread
     // Mutex untested but should be part of the object will protect partialResults
     // Will write to ip, port -> "2", total msg size, amount of keys to use, each int key to use,
@@ -577,7 +577,7 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
     // return resulting map
 
     socket->close();
-    qDebug() << "Honest Initiator Transaction Complete";
+    QTextStream(stdout) << "Honest Initiator Transaction Complete" << "\n";
 }
 
 QList<int>* DISEServer::getParticipantServerList()

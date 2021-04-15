@@ -20,13 +20,13 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
     connect(socket, SIGNAL(readyRead()),this, SLOT(readyRead()));
 
     if (debug)
-        qDebug() << "connecting...";
+        QTextStream(stdout) << "connecting..." << "\n";
 
     socket->connectToHost(ip, port);
 
     if(socket->waitForConnected(3000))
     {
-        qDebug() << "Connected to " << ip << port;
+        QTextStream(stdout) << "Connected to " << ip << ":" << port << "\n";
 
         // Gather information from key_gen object
         auto omega_matrix = key_gen->get_ref_to_omega_matrix();
@@ -126,45 +126,45 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
             socket->waitForBytesWritten(1000);
         }
 
-        qDebug() << "The number of bytes written is: " << bytesWritten;
+        QTextStream(stdout) << "The number of bytes written is: " << bytesWritten << "\n";
 
         // socket->waitForReadyRead(3000);
         // QString complete = socket->readAll();
-        // qDebug() << complete;
+        // QTextStream(stdout) << complete;
         socket->close();
     }
     else
     {
-        qDebug() << "Not connected";
+        QTextStream(stdout) << "Not connected" << "\n";
     }
 }
 
 void DealerClient::connected()
 {
     if (debug)
-        qDebug() << "connected...";
+        QTextStream(stdout) << "connected..." << "\n";
 }
 
 void DealerClient::disconnected()
 {
     if (debug)
-        qDebug() << "disconnected...";
+        QTextStream(stdout) << "disconnected..." << "\n";
 }
 
 void DealerClient::bytesWritten(qint64 bytes)
 {
     if (debug)
-        qDebug() << bytes << " bytes written...";
+        QTextStream(stdout) << bytes << " bytes written..." << "\n";
 }
 
 void DealerClient::readyRead()
 {
     if (debug)
     {
-        qDebug() << "reading...";
+        QTextStream(stdout) << "reading..." << "\n";
 
         // read the data from the socket
         QString s = socket->readAll();
-        qDebug() << s;
+        QTextStream(stdout) << s << "\n";
     }
 }

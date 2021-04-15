@@ -16,4 +16,5 @@
     #include <QStandardPaths>
     #include <QDataStream>
     #include <QMapIterator>
+    #include <QTextStream>
 #endif 

@@ -1,0 +1,43 @@
+Server Listening on port 1236
+Dealer Message Recieved
+Socket Disconnected
+Total Size Recieved 62760900
+Omega Matrix Size 11767536
+ENVIRONMENT:
+	Thread Count: 2
+	MachineNum: 2
+	TotalKeys: 735471
+	KeysPerMachine: 490314
+	SizeOfEachKey: 32
+	N: 24
+	T: 16
+	ADDRESSES:
+	0: localhost:1234
+	1: localhost:1235
+	2: localhost:1236
+	3: localhost:1237
+	4: localhost:1238
+	5: localhost:1239
+	6: localhost:1240
+	7: localhost:1241
+	8: localhost:1242
+	9: localhost:1243
+	10: localhost:1244
+	11: localhost:1245
+	12: localhost:1246
+	13: localhost:1247
+	14: localhost:1248
+	15: localhost:1249
+	16: localhost:1250
+	17: localhost:1251
+	18: localhost:1252
+	19: localhost:1253
+	20: localhost:1254
+	21: localhost:1255
+	22: localhost:1256
+	23: localhost:1257
+	KEY LIST:
+		KEY LIST RECIEVED IS TOO BIG TO PRINT
+	OMEGA MATRIX
+		MATRIX RECIEVED IS TOO BIG TO PRINT
+Dealer Transaction Complete

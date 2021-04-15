@@ -20,13 +20,13 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
     connect(socket, SIGNAL(readyRead()),this, SLOT(readyRead()));
 
     if (debug)
-        qDebug() << "connecting...";
+        QTextStream(stdout) << "connecting..." << "\n";
 
     socket->connectToHost(ip, port);
 
     if(socket->waitForConnected(3000))
     {
-        qDebug() << "Connected to " << ip << port;
+        QTextStream(stdout) << "Connected to " << ip << port << "\n";
 
         socket->write("1"); // Client
 
@@ -37,11 +37,11 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
 
         if (encMode == 1)
         {
-            qDebug() << "Decrypting this message: " << message;
+            QTextStream(stdout) << "Decrypting this message: " << message << "\n";
         }
         else
         {
-            qDebug() << "Encrypting this message: " << message;
+            QTextStream(stdout) << "Encrypting this message: " << message << "\n";
         }
 
         // Write encryption mode 
@@ -85,7 +85,7 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
             socket->waitForBytesWritten(1000);
         }
 
-        qDebug() << "Wrote: " << QString::number(bytesWritten) + " to Honest Initiator";
+        QTextStream(stdout) << "Wrote: " << QString::number(bytesWritten) + " to Honest Initiator" << "\n";
 
         ///////////////////////////////////////////////////////////////////
 
@@ -130,42 +130,42 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
 
         if (robustFlag == 0)
         {
-            qDebug() << "All partipant servers returned the correct results";
+            QTextStream(stdout) << "All partipant servers returned the correct results" << "\n";
         }
         else
         {
-            qDebug() << "There was a compromised partipant server in the transaction";
+            QTextStream(stdout) << "There was a compromised partipant server in the transaction" << "\n";
         }
 
-        qDebug() << "Resulting message: " << returnMessage;
+        QTextStream(stdout) << "Resulting message: " << returnMessage << "\n";
 
     }
     else
     {
-        qDebug() << "Not connected";
+        QTextStream(stdout) << "Not connected" << "\n";
     }
 }
 
 void Client::connected()
 {
     if (debug)
-        qDebug() << "connected...";
+        QTextStream(stdout) << "connected..." << "\n";
 }
 
 void Client::disconnected()
 {
     if (debug)
-        qDebug() << "disconnected...";
+        QTextStream(stdout) << "disconnected..." << "\n";
 }
 
 void Client::bytesWritten(qint64 bytes)
 {
     if (debug)
-        qDebug() << bytes << " bytes written...";
+        QTextStream(stdout) << bytes << " bytes written..." << "\n";
 }
 
 void Client::readyRead()
 {
     if (debug)
-        qDebug() << "reading...";
+        QTextStream(stdout) << "reading..." << "\n";
 }
