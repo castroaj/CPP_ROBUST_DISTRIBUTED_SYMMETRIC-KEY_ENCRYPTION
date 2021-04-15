@@ -249,24 +249,27 @@ void DISEServer::handleClient(QTcpSocket* socket)
     int encMode = 0;
     ds >> encMode;
 
+    // Get the message
     int sizeOfMessage = 0;
     ds >> sizeOfMessage;
 
-    QString message;
+    QString messageString;
+    unsigned char* message = (unsigned char *)malloc(sizeOfMessage);
     for (int i = 0; i < sizeOfMessage; i++)
     {
         QChar ch;
         ds >> ch;
-        message.append(ch);
+        messageString.append(ch);
+        message[i] = ch.toLatin1();
     }
 
     if (encMode == 1)
     {
-        qDebug() << "Decrypting this message: " << message;
+        qDebug() << "Decrypting this message: " << messageString;
     }
     else
     {
-        qDebug() << "Encrypting this message: " << message;
+        qDebug() << "Encrypting this message: " << messageString;
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -302,6 +305,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
         std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
     }
 
+
     // Set up shared partial results int keyId QByteArray encryption result
     qDebug() << "Honest Initiator Creating Threads";
     QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
@@ -316,16 +320,10 @@ void DISEServer::handleClient(QTcpSocket* socket)
     }
 
     // Encrypt the honest init keys
-    QSet<int>* honestKeys = environment->get_ref_to_omega_table()->value(environment->get_machine_num());
-    QSet<int>::iterator honestKeyIter;
-
-    qDebug() << "Honest Initiator Encrypting";
-    for (honestKeyIter = honestKeys->begin(); honestKeyIter != honestKeys->end(); ++honestKeyIter)
-    {
-        // TODO
-        // call encrprypt with each key held by the honest init
-        // *honestKeyIter is the key to be passed
-    }
+    QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
+    QMap<int, unsigned char*>* honestPartialResults = encryptDecrpytWithKeys(honestKeysToUse, message, sizeOfMessage, encMode);
+    // TODO
+    // add all results into a global partial results map protected by mutex, threads will also do this
 
     // Join Threads
     qDebug() << "Honest Initiator Joining Threads";
@@ -438,7 +436,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     partialResultsMap->clear();        //  removes all items from the map
 }
 
-void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, QString message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults)
+void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults)
 {
     qDebug() << "thread going";
     // TODO write honest -> partipant thread
@@ -465,8 +463,39 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
     // }
 }
 
-int DISEServer::encrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* encryptedMessage) {
-    unsigned char* key = environment->get_ref_to_key_list()->value(keyId);
+QMap<int, unsigned char*>* DISEServer::encryptDecrpytWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode)
+{
+    QMap<int, unsigned char*>* partialResults = new QMap<int, unsigned char*>();
+
+    // for each key in the keys to use list
+    int keySize = environment->get_size_of_each_key();
+    for (int i = 0; i < keyList->size(); i++)
+    {
+        unsigned char* key = environment->get_ref_to_key_list()->value(keyList->at(i));
+        // where the encrypted or decrypted msg will be saved
+        unsigned char* resultMessage;
+        int resultMessageSize = 0;
+        switch(mode)
+        {
+            case 0: // ENCRYPT
+                resultMessageSize = encrypt(message, msgSize, key, keySize, resultMessage);
+                break;
+            case 1: // DECRYPT
+                resultMessageSize = decrypt(message, msgSize, key, keySize, resultMessage);
+                break;
+        }
+        
+        // TODO
+        // save as QPair or QString
+        partialResults->insert(keyList->at(i), resultMessage);
+    }
+
+    return partialResults;
+}
+
+int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, int keySize, unsigned char* encryptedMessage) 
+{
+    
     unsigned char iv[keySize];
 
     // https://github.com/saju/misc/blob/master/misc/openssl_aes.c
@@ -512,9 +541,9 @@ int DISEServer::encrypt(unsigned char* message, int msgLen, int keyId, int keySi
     return 0;
 }
 
-int DISEServer::decrypt(unsigned char* message, int msgLen, int keyId, int keySize, unsigned char* decryptedMessage) {
+int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, int keySize, unsigned char* decryptedMessage) 
+{
 
-    // unsigned char* key = environment->get_ref_to_key_list()->value(keyId);
     // unsigned char iv[keySize];
     // unsigned len = 0; 
     // unsigned decryptedLen = 0;
@@ -555,6 +584,9 @@ int DISEServer::decrypt(unsigned char* message, int msgLen, int keyId, int keySi
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 {
     // TODO
+    // recieve from threads which keys mode and message
+    // call encryptDecrpytWithKeys
+    // return resulting map
 
     socket->close();
     qDebug() << "Honest Initiator Transaction Complete";
@@ -604,6 +636,7 @@ QMap<int, QList<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* parti
     }
 
     int honestInit = environment->get_machine_num();
+    serverKeysToUse->insert(honestInit, new QList<int>());
 
     // Go through each key to decide what machines will use what key
     for (int keyId = 0; keyId < environment->get_total_key_num(); keyId++)
@@ -662,6 +695,11 @@ QMap<int, QList<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* parti
             QList<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
             curKeysFirst->append(keyId);
             curKeysSecond->append(keyId);
+        }
+        else // owned by the honest init
+        {
+            QList<int>* curKeys = serverKeysToUse->value(honestInit);
+            curKeys->append(keyId);
         }
     }
 
