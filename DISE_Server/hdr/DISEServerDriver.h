@@ -15,6 +15,7 @@
     #include <thread> 
     #include <mutex> 
     #include <openssl/evp.h>
+    #define MAX_CIPHER_LEN 1024
 #endif
 
 #ifdef _OPENMP

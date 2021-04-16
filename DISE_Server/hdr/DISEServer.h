@@ -26,7 +26,7 @@
             void honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults);
             int encrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* encryptedMessage);
             int decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage);
-            QMap<int, unsigned char*>* encryptDecrpytWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode);
+            QMap<int, unsigned char*>* encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode);
 
         private:
             QTcpServer* m_server;
@@ -34,6 +34,6 @@
             bool debug;
             int port;
             Environment* environment;
-            std::mutex mtx;
+            std::mutex* mtx;
     };      
 #endif
