@@ -336,21 +336,34 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     // TODO **** Test for enc and dec
     // remove this is just for testing enc and dec
-    // int testMsgToEncSize = 5;
-    // unsigned char* testMsgToEnc = (unsigned char *)malloc(testMsgToEncSize);
-    // for (int i = 0; i < testMsgToEncSize)
-    // {
-    //     testMsgToEncSize[i] = 'a';
-    // }
-    // unsigned char* encMsg;
-    // unsigned char* decMsg;
-    // unsigned char* keyToUse = environment->get_ref_to_key_list()->value(honestKeysToUse->at(0));
-    // int keySize = environment->get_size_of_each_key();
-    // int encSize = encrypt(testMsgToEnc, testMsgToEncSize, keyToUse, keySize, encMsg);
-    // int decSize = decrypt(testMsgToEnc, testMsgToEncSize, keyToUse, keySize, decMsg);
-    // qDebug() << encSize;
-    // qDebug() << decSize;
-    // qDebug() << "size??";
+    int testMsgToEncSize = 5;
+    unsigned char* testMsgToEnc = (unsigned char *)malloc(testMsgToEncSize);
+    for (int i = 0; i < testMsgToEncSize; i++)
+    {
+        testMsgToEnc[i] = 'a';
+    }
+    unsigned char* encMsg = (unsigned char *)malloc(256);
+    unsigned char* decMsg = (unsigned char *)malloc(256);
+    unsigned char* keyToUse = environment->get_ref_to_key_list()->value(honestKeysToUse->at(0));
+    int encSize = encrypt(testMsgToEnc, testMsgToEncSize, keyToUse, encMsg);
+    int decSize = decrypt(encMsg, encSize, keyToUse, decMsg);
+    for (int i = 0; i < testMsgToEncSize; i++){
+		std::cout << testMsgToEnc[i];
+	}
+    std::cout << std::endl;
+    qDebug() << encSize;
+    for (int i = 0; i < encSize; i++){
+		std::cout << encMsg[i];
+	}
+    std::cout << std::endl;
+    qDebug() << decSize;
+    for (int i = 0; i < decSize; i++){
+		std::cout << decMsg[i];
+	}
+    std::cout << std::endl;
+    qDebug() << "size??";
+    free(encMsg);
+    free(decMsg);
     // check msg
     // End remove section
 
@@ -406,7 +419,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // Write size of enc/dec message and the enc/dec message
     out << uint32_t(finalResult.size());
     const QChar* messageToWrite = finalResult.data();
-    for (uint32_t i = 0; i < finalResult.size(); i++)
+    for (int i = 0; i < finalResult.size(); i++)
     {
         out << messageToWrite[i];
     }
@@ -497,13 +510,15 @@ QMap<int, unsigned char*>* DISEServer::encryptDecrpytWithKeys(QList<int>* keyLis
         switch(mode)
         {
             case 0: // ENCRYPT
-                resultMessageSize = encrypt(message, msgSize, key, keySize, resultMessage);
+                resultMessageSize = encrypt(message, msgSize, key, resultMessage);
                 break;
             case 1: // DECRYPT
-                resultMessageSize = decrypt(message, msgSize, key, keySize, resultMessage);
+                resultMessageSize = decrypt(message, msgSize, key, resultMessage);
                 break;
         }
         
+        //
+
         // TODO
         // save as QPair or QString
         partialResults->insert(keyList->at(i), resultMessage);
@@ -512,25 +527,25 @@ QMap<int, unsigned char*>* DISEServer::encryptDecrpytWithKeys(QList<int>* keyLis
     return partialResults;
 }
 
-int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, int keySize, unsigned char* encryptedMessage) 
+int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* encryptedMessage) 
 {
-    
-    unsigned char iv[keySize];
-    memset(iv, 0, keySize);
+    int ivLen = 12;    
+    unsigned char iv[ivLen];
+    memset(iv, 1, ivLen);
     int encLen = 0;
     int finalLen = 0;
 
-    // create context
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new() ;
+    /* Create and initialise the context */
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
     // init encryption operation
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv);
 
     // update the encrypted message
-    EVP_EncryptUpdate(ctx, message, &encLen, encryptedMessage, msgLen);
+    EVP_EncryptUpdate(ctx, encryptedMessage, &encLen, message, msgLen);
 
     // finilize the encryption
-    EVP_EncryptFinal_ex(ctx, message + encLen, &finalLen);
+    EVP_EncryptFinal_ex(ctx, encryptedMessage + encLen, &finalLen);
 
     encLen += finalLen;
 
@@ -540,11 +555,12 @@ int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, 
     return encLen;
 }
 
-int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, int keySize, unsigned char* decryptedMessage) 
+int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage) 
 {
-
-    unsigned char iv[keySize];
-    memset(iv, 0, keySize);
+    // TODO FIX THIS AND SEND AN IV WITH KEY IN DEALER STORE IN ENV :'(
+    int ivLen = 12;   
+    unsigned char iv[ivLen];
+    memset(iv, 1, ivLen);
 
     int decLen = 0;
     int finalLen = 0;
@@ -553,20 +569,20 @@ int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
     // initialize decription operation
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv );
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv );
 
     // update the decrypted message
-    EVP_DecryptUpdate(ctx, message, &decLen, decryptedMessage, msgLen);
+    EVP_DecryptUpdate(ctx, decryptedMessage, &decLen, message, msgLen);
 
     // finilize the enc
-    EVP_DecryptFinal_ex(ctx, message + decLen, &finalLen);
+    EVP_DecryptFinal_ex(ctx, decryptedMessage + decLen, &finalLen);
 
     decLen += finalLen;
 
     // Clean up
     EVP_CIPHER_CTX_free(ctx);
 
-    return 0;
+    return decLen;
 }
 
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)

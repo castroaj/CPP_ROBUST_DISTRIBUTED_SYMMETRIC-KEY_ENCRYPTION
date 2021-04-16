@@ -41,31 +41,3 @@ ENVIRONMENT:
 	OMEGA MATRIX
 		MATRIX RECIEVED IS TOO BIG TO PRINT
 Dealer Transaction Complete
-Client Message Recieved
-Encrypting this message: Hello This is the CS 470 41 Byte Message!
-	KEYS TO BE USED BY EACH SERVER
-	KEYS TO BE USED IS TOO BIG TO PRINT
-Honest Initiator Creating Threads
-Honest Initiator Joining Threads
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-thread going
-Threads Joined
-Honest Initiator xoring results and checking robustness
-Honest Initiator Sending Back Result
-Wrote: 44 to Client
-Socket Disconnected
-Client Transaction Complete
