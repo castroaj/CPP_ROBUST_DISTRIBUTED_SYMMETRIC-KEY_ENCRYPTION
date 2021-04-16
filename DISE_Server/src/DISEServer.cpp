@@ -419,7 +419,7 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     {
         unsigned char* curMessage = honestResultIter.value();
 
-        for (int i = 0; i < sizeOfMessage; i++)
+        for (int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
         {
             w[i] = w[i] ^ curMessage[i];
         }
@@ -434,14 +434,116 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         printf("%x ", *(prgw + i));
     }
     std::cout << "\n";
+    
+    // randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
 
-    randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
+    // for (int i = 0; i < sizeOfMessage + sizeof(long); i++)
+    // {
+    //     printf("%x ", *(prgw + i));
+    // }
+    // std::cout << "\n";
 
+    // XOR PRG(w) with (m || p)
+    unsigned char* cipherText = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
     for (int i = 0; i < sizeOfMessage + sizeof(long); i++)
     {
-        printf("%x ", *(prgw + i));
+        cipherText[i] = prgw[i] ^ mess_cat_p[i];
     }
-    std::cout << "\n";
+
+    // Return result to client
+    handleDecryptionRequest(socket, cipherText, sizeOfMessage + sizeof(long), a_cat_j);
+}
+
+void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* cipherText, int cipherTextSize, unsigned char* a_cat_j)
+{
+    // get paripant servers
+    QList<int>* participantServers = getParticipantServerList();
+
+    // Decide what keys will be used by each server
+    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+
+    // Set up shared partial results int keyId QByteArray encryption result
+    QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
+    
+    QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
+    
+    std::vector<std::thread> threadVector;
+    for (int i = 0; i < participantServers->size(); i++)
+    {
+        int serverId = participantServers->at(i);
+        QString ip = environment->get_ref_to_addresses()->value(serverId)->first;
+        int port = environment->get_ref_to_addresses()->value(serverId)->second;
+        QList<int>* keysToUse = serverKeysToUse->value(serverId);
+        threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, a_cat_j, DECRYPTION, partialResultsMap);
+    }
+
+    // Decrypt the honest init keys
+    QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
+    QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), DECRYPTION);
+
+    // Join Threads
+    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    for(auto& t: threadVector)
+    {
+        t.join();
+    }
+
+    QTextStream(stdout) << "Threads Joined" << "\n";
+    // Free memory
+    threadVector.clear();
+
+    unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
+    memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
+
+    QMap<int, unsigned char*>::iterator honestResultIter;
+
+    for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
+    {
+        unsigned char* curMessage = honestResultIter.value();
+
+        for (int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
+        {
+            w[i] = w[i] ^ curMessage[i];
+        }
+    }
+
+    // Generate Random PRGW
+    unsigned char* prgw = (unsigned char * ) malloc(cipherTextSize);
+    randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, cipherTextSize);
+
+    // XOR PRG(w) with (c1)
+    unsigned char* plainText = (unsigned char * ) malloc(cipherTextSize);
+    for (int i = 0; i < cipherTextSize; i++)
+    {
+        plainText[i] = prgw[i] ^ cipherText[i];
+    }
+
+    // Declare the (m || p) and (a = h(m || p))
+    unsigned char* newA = (unsigned char *) malloc(A_BYTE_SIZE);
+
+    cryptoHash(plainText, cipherTextSize, newA);
+    
+    for (int i = 0; i < A_BYTE_SIZE; i++) {
+        std::cout << a_cat_j[i] << " ";
+        // if (a_cat_j[i] != newA[i])
+        // {
+        //     std::cout << "Hash doesn't match" << std::endl;
+        //     break;
+        // }
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < A_BYTE_SIZE; i++) {
+        std::cout << newA[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // send back to client message and robust flag
+    for (int i = 0; i < cipherTextSize - sizeof(long); i++) {
+        std::cout << plainText[i];
+    }
+    std::cout << std::endl;
+
+
 }
 
 
@@ -579,8 +681,12 @@ unsigned int DISEServer::cryptoHash(unsigned char* data, int dataLen, unsigned c
 
 void DISEServer::randomNumberWithSeed(unsigned char* seed, int seedLen, unsigned char* result, int resultSize) 
 {
-    RAND_seed(seed, seedLen);
-    RAND_bytes(result, resultSize);
+    // RAND_seed(seed, seedLen);
+    // RAND_bytes(result, resultSize);
+    for (int i = 0; i < resultSize; i++) 
+    {
+        result[i] = seed[i % seedLen] * 2;
+    }
 }
 
 

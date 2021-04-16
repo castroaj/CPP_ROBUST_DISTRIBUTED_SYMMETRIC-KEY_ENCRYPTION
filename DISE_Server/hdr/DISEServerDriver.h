@@ -16,6 +16,7 @@
     #include <mutex> 
     #include <openssl/evp.h>
     #include <openssl/sha.h>
+    #include <openssl/rand_drbg.h>
     #include <openssl/crypto.h>
     #define MAX_CIPHER_LEN 1024
     #define ENCRYPTION 0

@@ -22,6 +22,7 @@
             void handleClient(QTcpSocket* socket);
             void handleHonestInitiator(QTcpSocket* socket);
             void handleEncryptionRequest(QTcpSocket* socket, unsigned char* message, int sizeOfMessage);
+            void handleDecryptionRequest(QTcpSocket* socket, unsigned char* cipherText, int cipherTextSize, unsigned char* a_cat_j);
 
             QList<int>* getParticipantServerList();
             QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
