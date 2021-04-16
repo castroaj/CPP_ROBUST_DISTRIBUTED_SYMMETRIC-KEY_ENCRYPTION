@@ -27,6 +27,7 @@
             int encrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* encryptedMessage);
             int decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage);
             QMap<int, unsigned char*>* encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode);
+            void printServerKeysToUse(QMap<int, QList<int>*>* serverKeysToUse);
 
         private:
             QTcpServer* m_server;

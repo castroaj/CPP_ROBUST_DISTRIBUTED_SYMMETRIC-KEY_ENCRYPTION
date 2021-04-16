@@ -4,7 +4,7 @@ qmake && make
 cd ../..
 
 cd DISE_Server/src
-qmake && make 
+qmake && make
 cd ../..
 
 cd Client/src

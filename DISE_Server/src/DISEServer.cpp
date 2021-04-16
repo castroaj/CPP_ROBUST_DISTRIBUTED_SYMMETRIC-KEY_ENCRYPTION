@@ -211,6 +211,8 @@ void DISEServer::handleDealer(QTcpSocket* socket)
         omegaMap->insert(i, omegaRow);
     }
 
+    free(omegaMatrix);
+
     // Save references into enviorment
     environment->set_total_key_num(totalAmountOfKeys);
     environment->set_machine_num(machineNumber);
@@ -284,30 +286,15 @@ void DISEServer::handleClient(QTcpSocket* socket)
 
     std::cout << "\tKEYS TO BE USED BY EACH SERVER" << std::endl;
     if (environment->get_N() != 24)
-    {
-        // iterate through n machines held keys
-        QMap<int, QList<int>*>::iterator serverIter;
-        for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
-        {
-            std::cout << "\t" << serverIter.key() << ": ";
-
-            // print key values in omega row
-            QList<int>* keysToUse = serverIter.value();
-
-            for (int i = 0; i < keysToUse->size(); i++)
-                std::cout << keysToUse->at(i) << " ";
-            
-            std::cout << "\n";
-        }
-    }
+        printServerKeysToUse(serverKeysToUse);
     else
-    {
         std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
-    }
+
 
     // Set up shared partial results int keyId QByteArray encryption result
     QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
     QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
+    
     std::vector<std::thread> threadVector;
     for (int i = 0; i < participantServers->size(); i++)
     {
@@ -328,6 +315,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     {
         t.join();
     }
+
     QTextStream(stdout) << "Threads Joined" << "\n";
     // Free memory
     threadVector.clear();
@@ -636,6 +624,25 @@ QList<int>* DISEServer::getParticipantServerList()
 
     return partipantServerNumbers;
 }
+
+void DISEServer::printServerKeysToUse(QMap<int, QList<int>*>* serverKeysToUse)
+{
+    // iterate through n machines held keys
+    QMap<int, QList<int>*>::iterator serverIter;
+    for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
+    {
+        std::cout << "\t" << serverIter.key() << ": ";
+
+        // print key values in omega row
+        QList<int>* keysToUse = serverIter.value();
+
+        for (int i = 0; i < keysToUse->size(); i++)
+            std::cout << keysToUse->at(i) << " ";
+        
+        std::cout << "\n";
+    }
+}
+
 
 QMap<int, QList<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* participantServers)
 {
