@@ -21,6 +21,8 @@
             void handleDealer(QTcpSocket* socket);
             void handleClient(QTcpSocket* socket);
             void handleHonestInitiator(QTcpSocket* socket);
+            void handleEncryptionRequest(QTcpSocket* socket, unsigned char* message, int sizeOfMessage);
+
             QList<int>* getParticipantServerList();
             QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
             void honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults);
@@ -28,6 +30,8 @@
             int decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage);
             QMap<int, unsigned char*>* encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode);
             void printServerKeysToUse(QMap<int, QList<int>*>* serverKeysToUse);
+            unsigned int cryptoHash(unsigned char* data, int dataLen, unsigned char* result);
+            void randomNumberWithSeed(unsigned char* seed, int seedLen, unsigned char* result, int resultSize);
 
         private:
             QTcpServer* m_server;

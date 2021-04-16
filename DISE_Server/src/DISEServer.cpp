@@ -267,142 +267,23 @@ void DISEServer::handleClient(QTcpSocket* socket)
         message[i] = ch.toLatin1();
     }
 
-    if (encMode == 1)
+    if (encMode == ENCRYPTION)
     {
-        QTextStream(stdout) << "Decrypting this message: " << messageString << "\n";
+        QTextStream(stdout) << "Encrypting this message: " << messageString << "\n";
+
+        handleEncryptionRequest(socket, message, sizeOfMessage);
+
     }
     else
     {
-        QTextStream(stdout) << "Encrypting this message: " << messageString << "\n";
+        QTextStream(stdout) << "Decrypting this message: " << messageString << "\n";
+        
     }
 
     ///////////////////////////////////////////////////////////////////
 
-    // get paripant servers
-    QList<int>* participantServers = getParticipantServerList();
-
-    // Decide what keys will be used by each server
-    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
-
-    std::cout << "\tKEYS TO BE USED BY EACH SERVER" << std::endl;
-    if (environment->get_N() != 24)
-        printServerKeysToUse(serverKeysToUse);
-    else
-        std::cout << "\tKEYS TO BE USED IS TOO BIG TO PRINT" << std::endl;
-
-
-    // Set up shared partial results int keyId QByteArray encryption result
-    QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
-    QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
-    
-    std::vector<std::thread> threadVector;
-    for (int i = 0; i < participantServers->size(); i++)
-    {
-        int serverId = participantServers->at(i);
-        QString ip = environment->get_ref_to_addresses()->value(serverId)->first;
-        int port = environment->get_ref_to_addresses()->value(serverId)->second;
-        QList<int>* keysToUse = serverKeysToUse->value(serverId);
-        threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, message, encMode, partialResultsMap); 
-    }
-
-    // Encrypt the honest init keys
-    QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
-    QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, message, sizeOfMessage, encMode);
-
-    // Join Threads
-    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
-    for(auto& t: threadVector)
-    {
-        t.join();
-    }
-
-    QTextStream(stdout) << "Threads Joined" << "\n";
-    // Free memory
-    threadVector.clear();
-
     QTextStream(stdout) << "Honest Initiator xoring results and checking robustness" << "\n";
-    // xor all partial results to get the final result
-    // and set robust flag checking if any of the results were not the same
-    unsigned char result[sizeOfMessage];
-    memset(result, 0x0, sizeOfMessage);
-    int robustFlag = 0;
-    // QMap<int, QList<unsigned char*>*>::iterator resultIter;
-    // for (resultIter = partialResultsMap->begin(); resultIter != partialResultsMap->end(); ++resultIter)
-    // {
-
-        // QList<unsigned char*>* partialResults = resultIter.value();
-        // char* msg = message.data();
-
-    //     // int cmp = memcmp(partialResults->at(0), partialResults->at(1), size));
-    //     // if (cmp == -1)
-    //     // {
-    //     //     robustFlag = 1;
-    //     // }
-
-        // xor partial and result assign to result
-        // TODO
-        // do the xor on each char a ^ b read into result
-        // issue here is to handle different lengths just an if 
-        // and the for loop goes to the longest result or new partial 
-        // but what do we do with leftover just save as is?
-    // }
-
-    // XOR honest results
-    // TODO REMOVE AND REFACTOR
-    // should be one loop of honest
-    qDebug() << "1!!!!!!!!!!!!!!!!!!!!!!!!!!";
-    QMap<int, unsigned char*>::iterator honestResultIter;
-    for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
-    {
-        unsigned char* curMessage = honestResultIter.value();
-
-        for (int i = 0; i < sizeOfMessage; i++){
-            std::cout << curMessage[i];
-        }
-        std::cout << std::endl;
-
-        for (int i = 0; i < sizeOfMessage; i++)
-        {
-            result[i] = result[i] ^ curMessage[i];
-        }
-    }
-
-    qDebug() << "RESULT 1";
-    for (int i = 0; i < sizeOfMessage; i++){
-        std::cout << result[i];
-    }
-    std::cout << std::endl;
-
-    // Encrypt the honest init keys
-    QList<int>* honestKeysToUse2 = serverKeysToUse->value(environment->get_machine_num());
-    QMap<int, unsigned char*>* honestPartialResults2 = encryptDecryptWithKeys(honestKeysToUse, result, sizeOfMessage, 1);
-
-    unsigned char result2[sizeOfMessage];
-    memset(result2, 0x0, sizeOfMessage);
-
-    qDebug() << "2!!!!!!!!!!!!!!!!!!!!!!!!!!";
-    QMap<int, unsigned char*>::iterator honestResultIter2;
-    for (honestResultIter2 = honestPartialResults2->begin(); honestResultIter2 != honestPartialResults2->end(); ++honestResultIter2)
-    {
-        unsigned char* curMessage = honestResultIter2.value();
-
-        for (int i = 0; i < sizeOfMessage; i++){
-            std::cout << curMessage[i];
-        }
-        std::cout << std::endl;
-
-        for (int i = 0; i < sizeOfMessage; i++)
-        {
-            result2[i] = result2[i] ^ curMessage[i];
-        }
-    }
-
-    qDebug() << "RESULT2!!!!!";
-    for (int i = 0; i < sizeOfMessage; i++){
-        std::cout << result2[i];
-    }
-    std::cout << std::endl;
-
+    
     
     // TODO 
     // temp remove and replace with actual result or turn result into a QString
@@ -416,6 +297,7 @@ void DISEServer::handleClient(QTcpSocket* socket)
     QDataStream out(&writeBuffer, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_5);
 
+    int robustFlag = 0;
     // Robust flag 0 all servers honest 1 there was a dishonest partipant
     out << uint32_t(robustFlag);
 
@@ -467,9 +349,101 @@ void DISEServer::handleClient(QTcpSocket* socket)
     // TODO
     // Need to do this just about every where
     // either calling delete, clear for simple maps,lists,sets, or qDeleteAll, clear for complex qdata types
-    qDeleteAll( *partialResultsMap );  //  deletes all the values stored in "map"
-    partialResultsMap->clear();        //  removes all items from the map
+    //qDeleteAll( *partialResultsMap );  //  deletes all the values stored in "map"
+    //partialResultsMap->clear();        //  removes all items from the map
 }
+
+void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* message, int sizeOfMessage)
+{
+    // Declare the (m || p) and (a = h(m || p))
+    unsigned char* mess_cat_p = (unsigned char *) malloc(sizeOfMessage + sizeof(long));
+    unsigned char* a_cat_j = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
+    
+    // Make a random number P
+    unsigned char p[sizeof(long)];
+    RAND_bytes(p, sizeof(long));
+
+    memcpy(mess_cat_p, message, sizeOfMessage);
+    memcpy(mess_cat_p + sizeOfMessage, p, sizeof(long));
+
+    int dlen = cryptoHash(mess_cat_p, sizeOfMessage + sizeof(long), a_cat_j);
+
+    int j = environment->get_machine_num();
+    memcpy(a_cat_j + A_BYTE_SIZE, (void *) &j, sizeof(int));
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+
+    // get paripant servers
+    QList<int>* participantServers = getParticipantServerList();
+
+    // Decide what keys will be used by each server
+    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+
+    // Set up shared partial results int keyId QByteArray encryption result
+    QMap<int, QList<unsigned char*>*>* partialResultsMap = new QMap<int, QList<unsigned char*>*>();
+    
+    QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
+    
+    std::vector<std::thread> threadVector;
+    for (int i = 0; i < participantServers->size(); i++)
+    {
+        int serverId = participantServers->at(i);
+        QString ip = environment->get_ref_to_addresses()->value(serverId)->first;
+        int port = environment->get_ref_to_addresses()->value(serverId)->second;
+        QList<int>* keysToUse = serverKeysToUse->value(serverId);
+        threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, a_cat_j, ENCRYPTION, partialResultsMap); 
+    }
+
+    // Encrypt the honest init keys
+    QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
+    QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
+
+    // Join Threads
+    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    for(auto& t: threadVector)
+    {
+        t.join();
+    }
+
+    QTextStream(stdout) << "Threads Joined" << "\n";
+    // Free memory
+    threadVector.clear();
+
+    unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
+    memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
+
+    QMap<int, unsigned char*>::iterator honestResultIter;
+
+    for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
+    {
+        unsigned char* curMessage = honestResultIter.value();
+
+        for (int i = 0; i < sizeOfMessage; i++)
+        {
+            w[i] = w[i] ^ curMessage[i];
+        }
+    }
+
+    // Generate Random PRGW
+    unsigned char* prgw = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
+    randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
+
+    for (int i = 0; i < sizeOfMessage + sizeof(long); i++)
+    {
+        printf("%x ", *(prgw + i));
+    }
+    std::cout << "\n";
+
+    randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
+
+    for (int i = 0; i < sizeOfMessage + sizeof(long); i++)
+    {
+        printf("%x ", *(prgw + i));
+    }
+    std::cout << "\n";
+}
+
 
 void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults)
 {
@@ -583,6 +557,32 @@ int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, 
 
     return decLen;
 }
+
+unsigned int DISEServer::cryptoHash(unsigned char* data, int dataLen, unsigned char* result) 
+{
+    unsigned int resultLen;
+
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+
+    EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
+
+    EVP_DigestUpdate(mdctx, data, dataLen);
+
+    result = (unsigned char *)OPENSSL_malloc(EVP_MD_size( EVP_sha256()));
+
+    EVP_DigestFinal_ex(mdctx, result, &resultLen);
+
+    EVP_MD_CTX_free(mdctx);
+    
+    return resultLen;
+}
+
+void DISEServer::randomNumberWithSeed(unsigned char* seed, int seedLen, unsigned char* result, int resultSize) 
+{
+    RAND_seed(seed, seedLen);
+    RAND_bytes(result, resultSize);
+}
+
 
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 {
