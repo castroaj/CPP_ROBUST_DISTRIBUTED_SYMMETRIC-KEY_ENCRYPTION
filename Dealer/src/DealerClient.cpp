@@ -8,6 +8,7 @@ DealerClient::DealerClient(bool d, QObject *parent) :
 
 DealerClient::~DealerClient()
 {
+    delete socket;    
 }
 
 void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num, QList<QString>* addresses)
@@ -128,9 +129,6 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
 
         QTextStream(stdout) << "The number of bytes written is: " << bytesWritten << "\n";
 
-        // socket->waitForReadyRead(3000);
-        // QString complete = socket->readAll();
-        // QTextStream(stdout) << complete;
         socket->close();
     }
     else

@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
     srand(time(NULL));
     int honestInitiatorIndex = rand() % addresses->size();
 
-    Client* client = new Client(debug);
+    Client client(debug);
 
     QString curString = addresses->at(honestInitiatorIndex);
     QStringList l = curString.split(QLatin1Char(':'));
@@ -156,7 +156,9 @@ int main(int argc, char* argv[])
     if (debug)
         QTextStream(stdout) << "Honest initiator: " << ip << " " << port.toInt() << "\n";
 
-    client->doConnect(ip, port.toInt(), environment->get_enc_mode(), message);
+    client.doConnect(ip, port.toInt(), environment->get_enc_mode(), message);
+
+    delete environment;
 
     std::cout << "Client Finished" << std::endl;
 }

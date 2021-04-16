@@ -142,6 +142,7 @@ int main(int argc, char* argv[])
 
     QList<QString>* addresses = environment->get_ref_to_addresses();
 
+
     #pragma omp parallel for
     for (int i = 0; i < addresses->size(); i++)
     {
@@ -156,7 +157,11 @@ int main(int argc, char* argv[])
             QTextStream(stdout) << ip << " " << port.toInt() << "\n";
 
         client->doConnect(key_gen, ip, port.toInt(), i, addresses);
+        delete client;
     }
 
     std::cout << "Dealer Finished" << std::endl;
+    
+    delete key_gen;
+    delete environment;
 }

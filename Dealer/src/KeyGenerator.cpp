@@ -31,10 +31,11 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode)
 
 KeyGenerator::~KeyGenerator()
 {
-    // Free memory for all-key list
+    //Free memory for all-key list
     for (int i = 0; i < all_key_list->size();i++)
     {
-        free(all_key_list->at(i));
+        auto k = all_key_list->at(i);
+        delete[] k;
     }
     delete all_key_list;
 
@@ -45,6 +46,9 @@ KeyGenerator::~KeyGenerator()
     // Free memory for key table
     key_table->clear();
     delete key_table;
+
+    free(omega_matrix);
+    free(omega_col_idxs);
 }
 
 void KeyGenerator::print_key_generator()

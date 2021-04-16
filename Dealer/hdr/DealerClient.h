@@ -12,7 +12,6 @@
             void doConnect(KeyGenerator* key_gen, QString ip, int port, int machine_num, QList<QString>* addresses);
             
         Q_SIGNALS:
-            //void sendMesssage();
 
         private Q_SLOTS:
             void connected();

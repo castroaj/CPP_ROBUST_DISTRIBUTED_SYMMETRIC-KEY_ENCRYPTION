@@ -10,7 +10,7 @@ Environment::Environment()
 Environment::~Environment()
 {
     ip_addresses->clear();
-    delete &ip_addresses;
+    delete ip_addresses;
 }
 
 void Environment::print_environment()
