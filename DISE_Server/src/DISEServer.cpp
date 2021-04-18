@@ -362,29 +362,40 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     unsigned char p[sizeof(long)];
     RAND_bytes(p, sizeof(long));
 
+    // Concat the mesage and long random number p
     memcpy(mess_cat_p, message, sizeOfMessage);
     memcpy(mess_cat_p + sizeOfMessage, p, sizeof(long));
 
+    // hash (m||p) to obtain a
     cryptoHash(mess_cat_p, sizeOfMessage + sizeof(long), a_cat_j);
 
+    // validate that the given a is the same as the new a
+    std::cout << "og a" << std::endl;
+    for (int i = 0; i < A_BYTE_SIZE; i++) {
+        std::cout << a_cat_j[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // Concat a with j the machine number to get (a||j)
     int j = environment->get_machine_num();
     memcpy(a_cat_j + A_BYTE_SIZE, (void *) &j, sizeof(int));
 
     ////////////////////////////////////////////////////////////////////////////////
 
-
-    // get paripant servers
+    // get paritipant servers
     QList<int>* participantServers = getParticipantServerList();
 
     // Decide what keys will be used by each server
     QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
 
-    // Set up shared partial results int keyId QByteArray encryption result
+    // Set up shared partial results int keyId char result and the robust flag
     QMap<int, unsigned char*>* partialResultsMap = new QMap<int, unsigned char*>();
     bool robustFlag = true;
     
     QTextStream(stdout) << "Honest Initiator Creating Threads" << "\n";
     
+    // Start all the threads to ask the partipant servers for their partial results
+    // this also performs the robust step
     std::vector<std::thread> threadVector;
     for (int i = 0; i < participantServers->size(); i++)
     {
@@ -395,15 +406,16 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, a_cat_j, partialResultsMap, &robustFlag); 
     }
 
-    // Encrypt the honest init keys
+    // Encrypt the honest initiator machines keys
     QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
     QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
 
+    // set up w 
     unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
     memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
 
+    // xor honest init results into w
     QMap<int, unsigned char*>::iterator honestResultIter;
-
     for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
     {
         unsigned char* curMessage = honestResultIter.value();
@@ -425,46 +437,44 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     // Free memory
     threadVector.clear();
 
-    QTextStream(stdout) << "size of qlist partial results" << "\n";
-    QTextStream(stdout) << partialResultsMap->size() << "\n";
-    QTextStream(stdout) << robustFlag << "\n";
+    QTextStream(stdout) << "Partial results" << "\n";
+    QTextStream(stdout) << "Size " << partialResultsMap->size() << "\n";
+    QTextStream(stdout) << "Robust Flag " << robustFlag << "\n";
 
-    std::cout << "W result\n";
-    for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
-    {
-        std::cout << w[i] << " ";
+    if (robustFlag)
+    { 
+        // No partipating server was compromised finish encryptions
+
+        // Join the other servers results into the final w
+        QMap<int, unsigned char*>::iterator participantResultIter;
+        for (participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
+        {
+            unsigned char* curMessage = participantResultIter.value();
+
+            for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
+            {
+                w[i] = w[i] ^ curMessage[i];
+            }
+        }
+
+        // Generate Random PRGW
+        unsigned char* prgw = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
+        randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
+
+        // XOR PRG(w) with (m || p)
+        unsigned char* cipherText = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
+        for (long unsigned int i = 0; i < sizeOfMessage + sizeof(long); i++)
+        {
+            cipherText[i] = prgw[i] ^ mess_cat_p[i];
+        }
+
+        // Return result to client
+        handleDecryptionRequest(socket, cipherText, sizeOfMessage + sizeof(long), a_cat_j);
     }
-    std::cout << std::endl;
-
-    // Check robust flag, Add thread results to w
-
-    // Generate Random PRGW
-    unsigned char* prgw = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
-    randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
-
-    for (long unsigned int i = 0; i < sizeOfMessage + sizeof(long); i++)
+    else
     {
-        printf("%x ", *(prgw + i));
+        // Write out compromised server message
     }
-    std::cout << "\n";
-    
-    // randomNumberWithSeed(w, A_BYTE_SIZE + sizeof(int), prgw, sizeOfMessage + sizeof(long));
-
-    // for (int i = 0; i < sizeOfMessage + sizeof(long); i++)
-    // {
-    //     printf("%x ", *(prgw + i));
-    // }
-    // std::cout << "\n";
-
-    // XOR PRG(w) with (m || p)
-    unsigned char* cipherText = (unsigned char * ) malloc(sizeOfMessage + sizeof(long));
-    for (long unsigned int i = 0; i < sizeOfMessage + sizeof(long); i++)
-    {
-        cipherText[i] = prgw[i] ^ mess_cat_p[i];
-    }
-
-    // Return result to client
-    // handleDecryptionRequest(socket, cipherText, sizeOfMessage + sizeof(long), a_cat_j);
 }
 
 void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* cipherText, int cipherTextSize, unsigned char* a_cat_j)
@@ -491,15 +501,16 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
         threadVector.emplace_back(&DISEServer::honestInitiatorThread, this, ip, port, keysToUse, a_cat_j, partialResultsMap, &robustFlag);
     }
 
-    // Decrypt the honest init keys
+    // Encrypt the honest init keys
     QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
     QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
 
+    // set up w 
     unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
     memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
 
+    // xor honest init results
     QMap<int, unsigned char*>::iterator honestResultIter;
-
     for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
     {
         unsigned char* curMessage = honestResultIter.value();
@@ -521,13 +532,24 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     // Free memory
     threadVector.clear();
 
-    // Do thread partial w xor to create the final w
-    // TODO
-    for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
+    // Check if the threads found a non redundent partial w between the other partipant servers
+    if (!robustFlag)
     {
-        std::cout << w[i] << " ";
+        // early termination there was a redundancy issue
+        return;
     }
-    std::cout << std::endl;
+        
+    // Join the other servers results into the final w
+    QMap<int, unsigned char*>::iterator participantResultIter;
+    for (participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
+    {
+        unsigned char* curMessage = participantResultIter.value();
+
+        for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
+        {
+            w[i] = w[i] ^ curMessage[i];
+        }
+    }
 
     // Generate Random PRGW
     unsigned char* prgw = (unsigned char * ) malloc(cipherTextSize);
@@ -542,30 +564,36 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
 
     // Check that a is the same as h(m || p)
     unsigned char* newA = (unsigned char *) malloc(A_BYTE_SIZE);
-
     cryptoHash(plainText, cipherTextSize, newA);
     
-    for (int i = 0; i < A_BYTE_SIZE; i++) {
-        std::cout << a_cat_j[i] << " ";
-        // if (a_cat_j[i] != newA[i])
-        // {
-        //     std::cout << "Hash doesn't match" << std::endl;
-        //     break;
-        // }
+    // validate that the given a is the same as the new a
+    for (int i = 0; i < A_BYTE_SIZE && robustFlag; i++) {
+        if (a_cat_j[i] != newA[i])
+        {
+            std::cout << "Hash doesn't match" << std::endl;
+            robustFlag = false;
+        }
     }
-    std::cout << std::endl;
-    for (int i = 0; i < A_BYTE_SIZE; i++) {
-        std::cout << newA[i] << " ";
-    }
-    std::cout << std::endl;
 
-    // send back to client message and robust flag
-    QTextStream(stdout) << "Resulting Plain Text" << "\n";
-    for (long unsigned int i = 0; i < cipherTextSize - sizeof(long); i++) {
-        std::cout << plainText[i];
+    // check robust again after hash check write out either resulting plain text or failure message
+    if (robustFlag)
+    {
+        // send back to client message and robust flag
+        QTextStream(stdout) << "Resulting Plain Text" << "\n";
+        for (long unsigned int i = 0; i < cipherTextSize - sizeof(long); i++) {
+            std::cout << plainText[i];
+        }
+        std::cout << std::endl;
+        QTextStream(stdout) << "From:" << "\n";
+        for (long unsigned int i = 0; i < cipherTextSize - sizeof(long); i++) {
+            std::cout << cipherText[i];
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
-
+    else 
+    {
+        // write out failure
+    }
 
 }
 
@@ -573,9 +601,7 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
 {
     QTextStream(stdout) << "thread going" << "\n";
     
-    // // Connect to partipant server
-    // QTcpSocket *socket = new QTcpSocket(this);
-    // QScopedPointer<QTcpSocket> socket(new QTcpSocket());
+    // Connect to partipant server
     QTcpSocket *socket = new QTcpSocket();
     socket->connectToHost(ip, port);
 
@@ -669,13 +695,10 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
             unsigned char* value = (unsigned char * ) malloc(A_BYTE_SIZE + sizeof(int));
 
             ds >> keyId;
-            std::cout << keyId << " recieved " << port << std::endl;
             for (long unsigned int j = 0; j < A_BYTE_SIZE + sizeof(int); j++)
             {
                 ds >> value[j];
-                std::cout << value[j] << " ";
             }
-            std::cout << std::endl;
 
             myPartialResults->insert(keyId, value);
         }
@@ -689,21 +712,12 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
 
             if (partialResults->contains(keyId))
             {
-                std::cout << "key id: " << keyId << std::endl;
-                for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++) {
-                    std::cout << resultsIter.value()[i] << " ";
+                // Check robustness
+                if (memcmp(partialResults->value(keyId), resultsIter.value(), A_BYTE_SIZE + sizeof(int)) != 0) 
+                {
+                    *robustFlag = false;
+                    QTextStream(stdout) << "Not Robust, Triggered by key: " << keyId << "\n";
                 }
-                std::cout << std::endl;
-                for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++) {
-                    std::cout << partialResults->value(keyId)[i] << " ";
-                }
-                std::cout << std::endl;
-                    
-               if (memcmp(partialResults->value(keyId), resultsIter.value(), A_BYTE_SIZE + sizeof(int)) != 0) 
-               {
-                   *robustFlag = false;
-                   QTextStream(stdout) << "Not Robust, Triggered by key: " << keyId << "\n";
-               }
             }
             else
             {
@@ -718,7 +732,7 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
         QTextStream(stdout) << "Not connected" << "\n";
     }
 
-    // QTextStream(stdout) << "Thread for server: " << ip << " complete" << "\n";
+    QTextStream(stdout) << "Thread for server: " << ip << " " << port << " complete" << "\n";
 }
 
 QMap<int, unsigned char*>* DISEServer::encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode)
@@ -809,13 +823,14 @@ unsigned int DISEServer::cryptoHash(unsigned char* data, int dataLen, unsigned c
 {
     unsigned int resultLen;
 
-    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    // EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
 
     EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
 
     EVP_DigestUpdate(mdctx, data, dataLen);
 
-    result = (unsigned char *)OPENSSL_malloc(EVP_MD_size( EVP_sha256()));
+    // result = (unsigned char *)OPENSSL_malloc(EVP_MD_size( EVP_sha256()));
 
     EVP_DigestFinal_ex(mdctx, result, &resultLen);
 
@@ -897,15 +912,12 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
     for (resultIter = partialResults->begin(); resultIter != partialResults->end(); ++ resultIter)
     {
         out << uint32_t(resultIter.key());
-        std::cout << resultIter.key() << " " << std::endl;
 
         // the resulting cipherText for the key
         for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
         {
             out << resultIter.value()[i];
-            std::cout << resultIter.value()[i] << " ";
         }
-        std::cout << std::endl;
     }
 
     // Write total size of the message

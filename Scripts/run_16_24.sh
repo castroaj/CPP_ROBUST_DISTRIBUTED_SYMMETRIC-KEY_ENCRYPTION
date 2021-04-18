@@ -22,6 +22,8 @@ cd ../../Dealer/src
 echo "DEALING"
 ./Dealer -d -c ../config/n24t16Local.conf > ../../Scripts/output_16_24/Dealer/Dealer
 
+echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT"
+sleep 10
 
 echo "CLIENT REQUEST"
 cd ../../Client/src
