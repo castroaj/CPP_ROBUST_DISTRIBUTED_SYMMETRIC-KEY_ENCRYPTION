@@ -26,7 +26,7 @@
 
             QList<int>* getParticipantServerList();
             QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* partipantServers);
-            void honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* message, int encMode, QMap<int, QList<unsigned char*>*>* partialResults);
+            void honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* a_cat_j, QMap<int, unsigned char*>* partialResults, bool* robustFlag);
             int encrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* encryptedMessage);
             int decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage);
             QMap<int, unsigned char*>* encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode);
