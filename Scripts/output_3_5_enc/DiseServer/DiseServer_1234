@@ -1,0 +1,79 @@
+Server Listening on port 1234
+Dealer Message Recieved
+Socket Disconnected
+Total Size Recieved 488
+Omega Matrix Size 30
+ENVIRONMENT:
+	Thread Count: 2
+	MachineNum: 0
+	TotalKeys: 10
+	KeysPerMachine: 6
+	SizeOfEachKey: 32
+	N: 5
+	T: 3
+	ADDRESSES:
+	0: localhost:1234
+	1: localhost:1235
+	2: localhost:1236
+	3: localhost:1237
+	4: localhost:1238
+	KEY LIST:
+	0: e6 dc e2 7b ca 46 d9 55 f9 5a a6 94 f1 ff f2 7b 93 76 ea 45 24 2e 47 77 e0 f1 f8 49 83 d 16 d6 
+	1: be d9 e0 e3 bb b9 6e d1 64 46 28 7d b7 c6 a3 26 3f c6 34 5 94 24 c0 cd de 78 d4 fc 3e e4 6a 71 
+	2: 82 22 4d 76 24 d0 4b bf 70 44 28 de ba 0 64 e9 96 9f 2e bc 89 12 6d fb 4c a6 3b cd 29 ff e4 26 
+	3: 9 85 5c f9 5c 5b ff af 2c 7 92 42 bb b2 c2 83 ef 67 52 52 d8 4a ac e8 d6 85 c7 2 57 6a 50 40 
+	4: bf b5 62 d0 3e d 1b 3e e9 60 c2 92 e9 1e 37 76 46 50 c0 3c 1b 61 9f a4 c2 af d8 fa eb e0 91 2d 
+	5: 23 89 e1 2d cb d4 b7 17 50 2c 8a 4 90 83 bc bf ca 84 8f 30 ea ac fe a6 68 3 91 29 49 f8 14 53 
+	OMEGA MATRIX
+	0: 5 4 3 2 1 0 
+	1: 6 8 2 1 0 7 
+	2: 6 4 9 3 0 7 
+	3: 6 5 9 8 3 1 
+	4: 5 4 9 8 2 7 
+Dealer Transaction Complete
+Client Message Recieved
+Encrypting
+og a
+ß / ´  U † È 3 u . Õ ' © & Ò : } @ z W í  ÿ … e ü ¥ ¥ æ ù ï 2 
+Honest Initiator Creating Threads
+Honest Initiator Joining Threads
+thread going
+thread going
+Thread Connected 
+Wrote: 48 to Participant Server
+Thread Connected 
+thread going
+Thread Connected 
+Wrote: 52 to Participant Server
+Wrote: 52 to Participant Server
+Thread for server: localhost 1237 complete
+Thread for server: localhost 1238 complete
+Thread for server: localhost 1235 complete
+Threads Joined
+Partial results
+Size 4
+Robust Flag 1
+Encryption successful writing to client
+Socket Disconnected
+Client Transaction Complete
+Client Message Recieved
+Decrypting
+Honest Initiator Creating Threads
+Honest Initiator Joining Threads
+thread going
+Thread Connected 
+Wrote: 48 to Participant Server
+thread going
+Thread Connected 
+Wrote: 52 to Participant Server
+thread going
+Thread Connected 
+Wrote: 52 to Participant Server
+Thread for server: localhost 1235 complete
+Thread for server: localhost 1237 complete
+Thread for server: localhost 1236 complete
+Threads Joined
+Resulting Plain Text
+Hello This is the CS 470 41 Byte Message!
+Socket Disconnected
+Client Transaction Complete
