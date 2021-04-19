@@ -10,7 +10,7 @@ Client::~Client()
 {
 }
 
-void Client::doConnect(QString ip, int port, unsigned int encMode, QString message)
+void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char* message, int msgSize, unsigned char* a_cat_j, int a_cat_j_size)
 {
     socket = new QTcpSocket(this);
 
@@ -35,11 +35,7 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
         QDataStream out(&block, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_5);
 
-        if (encMode == 1)
-        {
-            QTextStream(stdout) << "Decrypting this message: " << message << "\n";
-        }
-        else
+        if (encMode == ENCRYPTION)
         {
             QTextStream(stdout) << "Encrypting this message: " << message << "\n";
         }
@@ -48,11 +44,20 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
         out << uint32_t(encMode);
 
         // Write size of message
-        out << message.size(); 
-        const QChar* messageToWrite = message.data();
-        for (int i = 0; i < message.size(); i++)
+        out << msgSize; 
+        for (int i = 0; i < msgSize; i++)
         {
-            out << messageToWrite[i];
+            out << message[i];
+        }
+
+        // if dec 
+        if (encMode == DECRYPTION)
+        {
+            out << uint32_t(a_cat_j_size); 
+            for (int i = 0; i < a_cat_j_size; i++)
+            {
+                out << a_cat_j[i];
+            }
         }
 
         // Write total size of the message
@@ -101,43 +106,93 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, QString messa
         QByteArray resultsBuffer;
         QByteArray tmpBuffer;
 
+        std::cout << "here" << std::endl;
+
         while (resultsBuffer.size() < totalReadSize)
         {
-            socket->waitForReadyRead();
+            socket->waitForReadyRead(1000);
             tmpBuffer = socket->read(30000);
             resultsBuffer.append(tmpBuffer);
         }
 
         QDataStream ds(resultsBuffer);
 
+        std::cout << "here" << std::endl;
+
+        // all data recieved close the socket
         socket->close();
 
         // Flag to see if there was a compromised server
-        int robustFlag = 0;
+        bool robustFlag = false;
         ds >> robustFlag;
 
-        // Return Message
-        int sizeOfReturnMessage = 0;
-        ds >> sizeOfReturnMessage;
+        std::cout << robustFlag << std::endl;
 
-        QString returnMessage;
-        for (int i = 0; i < sizeOfReturnMessage; i++)
-        {
-            QChar ch;
-            ds >> ch;
-            returnMessage.append(ch);
+        // Three possible: successful enc, successful dec, or compromised server
+        if (robustFlag && encMode == ENCRYPTION) {
+            std::cout << "Reading Successful Encryption" << std::endl;
+
+            // Return Message
+            int sizeOfReturnMessage = 0;
+            ds >> sizeOfReturnMessage;
+
+            unsigned char returnMessage[sizeOfReturnMessage];
+            for (int i = 0; i < sizeOfReturnMessage; i++)
+            {
+                ds >> returnMessage[i];
+            }
+
+            // Recieve a||j
+            int a_cat_j_enc_size = 0;
+            ds >> a_cat_j_enc_size;
+            unsigned char* a_cat_j_enc = (unsigned char *) malloc(a_cat_j_enc_size);
+
+            for (int i = 0; i < a_cat_j_enc_size; i++)
+            {
+                ds >> a_cat_j_enc[i];
+            }
+
+            // Save results of the encryption to use later
+            QFile file("encResult.txt");
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+                return;
+
+            QDataStream fds(&file);
+
+            // write message to file
+            fds << uint32_t(sizeOfReturnMessage);
+            for (int i = 0; i < sizeOfReturnMessage; i++)
+            {
+                fds << returnMessage[i];
+            }
+            for (int i = 0; i < a_cat_j_enc_size; i++)
+            {
+                fds << a_cat_j_enc[i];
+            }
+
         }
-
-        if (robustFlag == 0)
+        else if (robustFlag && encMode == DECRYPTION)
         {
-            QTextStream(stdout) << "All partipant servers returned the correct results" << "\n";
+            std::cout << "Reading Successful Encryption" << std::endl;
+            // Return Message
+            int sizeOfReturnMessage = 0;
+            ds >> sizeOfReturnMessage;
+
+            QString returnMessage;
+            for (int i = 0; i < sizeOfReturnMessage; i++)
+            {
+                unsigned char ch;
+                ds >> ch;
+                returnMessage.append(QChar(ch));
+            }
+
+            QTextStream(stdout) << "Resulting message: " << returnMessage << "\n";
         }
         else
         {
-            QTextStream(stdout) << "There was a compromised partipant server in the transaction" << "\n";
+            // There was a compromised server
+            QTextStream(stdout) << "Robust Flag caught a compromised server in this transaction" << "\n";
         }
-
-        QTextStream(stdout) << "Resulting message: " << returnMessage << "\n";
 
     }
     else

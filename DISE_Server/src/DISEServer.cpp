@@ -256,100 +256,41 @@ void DISEServer::handleClient(QTcpSocket* socket)
     int sizeOfMessage = 0;
     ds >> sizeOfMessage;
 
-    QString messageString;
     unsigned char* message = (unsigned char *)malloc(sizeOfMessage);
     for (int i = 0; i < sizeOfMessage; i++)
     {
-        QChar ch;
-        ds >> ch;
-        messageString.append(ch);
-        message[i] = ch.toLatin1();
+        ds >> message[i];
     }
 
+    // if decryption a_cat_j will also be sent
+    int a_cat_j_size = 0;
+    ds >> a_cat_j_size;
+
+    unsigned char* a_cat_j = (unsigned char *)malloc(a_cat_j_size);
+    for (int i = 0; i < a_cat_j_size; i++)
+    {
+        ds >> a_cat_j[i];
+    }
+
+    // Pass the socket along to the corrisponding operation
     if (encMode == ENCRYPTION)
     {
-        QTextStream(stdout) << "Encrypting this message: " << messageString << "\n";
-
+        QTextStream(stdout) << "Encrypting" << "\n";
         handleEncryptionRequest(socket, message, sizeOfMessage);
-
     }
     else
     {
-        QTextStream(stdout) << "Decrypting this message: " << messageString << "\n";
-        
+        QTextStream(stdout) << "Decrypting" << "\n";
+        handleDecryptionRequest(socket, message, sizeOfMessage, a_cat_j);
     }
 
-    ///////////////////////////////////////////////////////////////////
-
-    QTextStream(stdout) << "Honest Initiator xoring results and checking robustness" << "\n";
-    
-    
-    // TODO 
-    // temp remove and replace with actual result or turn result into a QString
-    QString finalResult = "Temp return result";
-
-    // ///////////////////////////////////////////////////////////////////
-
-    // Build return message
-    QTextStream(stdout) << "Honest Initiator Sending Back Result" << "\n";
-    QByteArray writeBuffer;
-    QDataStream out(&writeBuffer, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_5);
-
-    int robustFlag = 0;
-    // Robust flag 0 all servers honest 1 there was a dishonest partipant
-    out << uint32_t(robustFlag);
-
-    // Write size of enc/dec message and the enc/dec message
-    out << uint32_t(finalResult.size());
-    const QChar* messageToWrite = finalResult.data();
-    for (int i = 0; i < finalResult.size(); i++)
-    {
-        out << messageToWrite[i];
-    }
-    
-    // Write Total Size
-    QByteArray totalWriteSize;
-    QDataStream outSize(&totalWriteSize, QIODevice::WriteOnly);
-    outSize.setVersion(QDataStream::Qt_4_5);
-
-    outSize << writeBuffer.size();
-
-    socket->write(totalWriteSize);
-    socket->flush();
-    socket->waitForBytesWritten(1000);
-
-    // Write Return Message
-    char* data = writeBuffer.data();
-
-    int maxWrite = 30000;
-
-    int bytesWritten = 0;
-    while (bytesWritten < writeBuffer.size())
-    {
-        // if we have less bytes remaining to write than the max size
-        if (writeBuffer.size()- bytesWritten < maxWrite)
-        {
-            maxWrite = writeBuffer.size() - bytesWritten;
-        }
-
-        // write to client
-        bytesWritten += socket->write(data + bytesWritten, maxWrite);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
-    }
-
-    QTextStream(stdout) << "Wrote: " << bytesWritten << " to Client" << "\n";
-
+    // Clean up socket
     socket->close();
     QTextStream(stdout) << "Client Transaction Complete" << "\n";
 
     // Free memory
-    // TODO
-    // Need to do this just about every where
-    // either calling delete, clear for simple maps,lists,sets, or qDeleteAll, clear for complex qdata types
-    //qDeleteAll( *partialResultsMap );  //  deletes all the values stored in "map"
-    //partialResultsMap->clear();        //  removes all items from the map
+    free(message);
+    free(a_cat_j);
 }
 
 void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* message, int sizeOfMessage)
@@ -441,6 +382,16 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     QTextStream(stdout) << "Size " << partialResultsMap->size() << "\n";
     QTextStream(stdout) << "Robust Flag " << robustFlag << "\n";
 
+    // block to write data to
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_5);
+
+    // Write total size of the message
+    QByteArray totalSize;
+    QDataStream outSize(&totalSize, QIODevice::WriteOnly);
+    outSize.setVersion(QDataStream::Qt_4_5);
+
     if (robustFlag)
     { 
         // No partipating server was compromised finish encryptions
@@ -469,17 +420,45 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         }
 
         // Return result to client
-        handleDecryptionRequest(socket, cipherText, sizeOfMessage + sizeof(long), a_cat_j);
+        std::cout << "Encryption successful writing to client" << std::endl;
+        // write out cipher text
+        out << bool(robustFlag);
+        out << uint32_t(sizeOfMessage + sizeof(long));
+        for (long unsigned int i = 0 ; i < sizeOfMessage + sizeof(long); i++)
+        {
+            out << cipherText[i];
+        }
+        // write out a||j
+        out << uint32_t(A_BYTE_SIZE + sizeof(int));
+        for (long unsigned int i = 0; i < sizeOfMessage + sizeof(long); i++)
+        {
+            out << a_cat_j[i];
+        }
+        outSize << block.size();
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+        socket->write(block);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
     }
     else
     {
         // Write out compromised server message
+        out << robustFlag;
+        outSize << uint32_t(sizeof(int));
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+        socket->write(block);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
     }
 }
 
 void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* cipherText, int cipherTextSize, unsigned char* a_cat_j)
 {
-    // get paripant servers
+    // get participant servers
     QList<int>* participantServers = getParticipantServerList();
 
     // Decide what keys will be used by each server
@@ -532,10 +511,29 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     // Free memory
     threadVector.clear();
 
+    // block to write data to
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_5);
+
+    // Write total size of the message
+    QByteArray totalSize;
+    QDataStream outSize(&totalSize, QIODevice::WriteOnly);
+    outSize.setVersion(QDataStream::Qt_4_5);
+
     // Check if the threads found a non redundent partial w between the other partipant servers
     if (!robustFlag)
     {
-        // early termination there was a redundancy issue
+        // Early termination there was a redundancy issue
+        // Write out compromised server message
+        out << robustFlag;
+        outSize << uint32_t(sizeof(int));
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+        socket->write(block);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
         return;
     }
         
@@ -578,21 +576,39 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     // check robust again after hash check write out either resulting plain text or failure message
     if (robustFlag)
     {
-        // send back to client message and robust flag
+        // Write robust flag
+        out << robustFlag;
+
+        // Write client message
+        int plainTextSize = cipherTextSize - sizeof(long);
+        out << plainTextSize;
         QTextStream(stdout) << "Resulting Plain Text" << "\n";
-        for (long unsigned int i = 0; i < cipherTextSize - sizeof(long); i++) {
+        for (int i = 0; i < plainTextSize; i++) {
             std::cout << plainText[i];
+            out << plainText[i];
         }
         std::cout << std::endl;
-        QTextStream(stdout) << "From:" << "\n";
-        for (long unsigned int i = 0; i < cipherTextSize - sizeof(long); i++) {
-            std::cout << cipherText[i];
-        }
-        std::cout << std::endl;
+
+        // Write total size
+        outSize << block.size();
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+        socket->write(block);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
     }
     else 
     {
-        // write out failure
+        // Write out compromised server message, hash was not good
+        out << robustFlag;
+        outSize << uint32_t(sizeof(int));
+        socket->write(totalSize);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
+        socket->write(block);
+        socket->flush();
+        socket->waitForBytesWritten(1000);
     }
 
 }

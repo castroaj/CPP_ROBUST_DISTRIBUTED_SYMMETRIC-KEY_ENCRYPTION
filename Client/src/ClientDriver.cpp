@@ -153,10 +153,53 @@ int main(int argc, char* argv[])
     QString ip = l.at(0);
     QString port = l.at(1);
 
-    if (debug)
-        QTextStream(stdout) << "Honest initiator: " << ip << " " << port.toInt() << "\n";
+    // Decrypt will read message
+    if (environment->get_enc_mode() == DECRYPTION)
+    {
+        QFile file("encResult.txt");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return EXIT_FAILURE;
 
-    client.doConnect(ip, port.toInt(), environment->get_enc_mode(), message);
+        QDataStream in(&file);
+
+        int sizeOfCipherText = 0;
+        in >> sizeOfCipherText;
+
+        unsigned char* cipherText = (unsigned char *) malloc(sizeOfCipherText);
+        for (int i = 0; i < sizeOfCipherText; i++) 
+        {
+            in >> cipherText[i];
+        }
+
+        unsigned char* a_cat_j = (unsigned char *) malloc(32 + sizeof(int));
+        for (long unsigned int i = 0; i < 32 + sizeof(int); i++) 
+        {
+            in >> a_cat_j[i];
+        }
+
+        client.doConnect(ip, port.toInt(), environment->get_enc_mode(), cipherText, sizeOfCipherText, a_cat_j, 32 + sizeof(int));
+
+        free(a_cat_j);
+        free(cipherText);
+    }
+    else
+    {
+        if (debug)
+            QTextStream(stdout) << "Honest initiator: " << ip << " " << port.toInt() << "\n";
+
+        int sizeOfPlainText = message.size();
+        unsigned char* plainText = (unsigned char *) malloc(sizeOfPlainText);
+        QChar* data = message.data();
+        for (int i = 0; i < sizeOfPlainText; i++) 
+        {
+            plainText[i] = data[i].toLatin1();
+        }
+
+        client.doConnect(ip, port.toInt(), environment->get_enc_mode(), plainText, sizeOfPlainText, NULL, 0);
+        
+        free(plainText);
+    }
+    
 
     delete environment;
 

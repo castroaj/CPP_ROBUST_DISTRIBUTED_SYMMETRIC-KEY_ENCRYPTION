@@ -10,6 +10,8 @@
     #include <inttypes.h>
     #include <openssl/rand.h>
     #include "Qt.h"
+    #define ENCRYPTION 0
+    #define DECRYPTION 1
 #endif
 
 #ifdef _OPENMP
