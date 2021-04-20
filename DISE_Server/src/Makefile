@@ -37,7 +37,7 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = DiseServer1.0.0
-DISTDIR = /home/garrettchristian/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/bin/DiseServer1.0.0
+DISTDIR = /home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/bin/DiseServer1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1
 LIBS          = $(SUBLIBS) -fopenmp -lcrypto /usr/lib/x86_64-linux-gnu/libQt5Network.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lpthread   
@@ -54,10 +54,12 @@ OBJECTS_DIR   = ../bin/
 
 SOURCES       = DISEServerDriver.cpp \
 		Environment.cpp \
-		DISEServer.cpp moc_DISEServer.cpp
+		DISEServer.cpp \
+		DISEServerUtil.cpp moc_DISEServer.cpp
 OBJECTS       = ../bin/DISEServerDriver.o \
 		../bin/Environment.o \
 		../bin/DISEServer.o \
+		../bin/DISEServerUtil.o \
 		../bin/moc_DISEServer.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
@@ -136,9 +138,11 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		DISEServer.pro ../hdr/DISEServerDriver.h \
 		../hdr/Environment.h \
 		../hdr/Qt.h \
-		../hdr/DISEServer.h DISEServerDriver.cpp \
+		../hdr/DISEServer.h \
+		../hdr/DISEServerUtil.h DISEServerDriver.cpp \
 		Environment.cpp \
-		DISEServer.cpp
+		DISEServer.cpp \
+		DISEServerUtil.cpp
 QMAKE_TARGET  = DiseServer
 DESTDIR       = 
 TARGET        = DiseServer
@@ -316,8 +320,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../hdr/DISEServerDriver.h ../hdr/Environment.h ../hdr/Qt.h ../hdr/DISEServer.h $(DISTDIR)/
-	$(COPY_FILE) --parents DISEServerDriver.cpp Environment.cpp DISEServer.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../hdr/DISEServerDriver.h ../hdr/Environment.h ../hdr/Qt.h ../hdr/DISEServer.h ../hdr/DISEServerUtil.h $(DISTDIR)/
+	$(COPY_FILE) --parents DISEServerDriver.cpp Environment.cpp DISEServer.cpp DISEServerUtil.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -358,7 +362,7 @@ moc_DISEServer.cpp: ../hdr/DISEServer.h \
 		../hdr/Environment.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/garrettchristian/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/src/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/garrettchristian/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/src -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../hdr/DISEServer.h -o moc_DISEServer.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/src/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/castroaj/DEV/CPP_ROBUST_DISTRIBUTED_SYMMETRIC-KEY_ENCRYPTION/DISE_Server/src -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../hdr/DISEServer.h -o moc_DISEServer.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -388,8 +392,15 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean
 ../bin/DISEServer.o: DISEServer.cpp ../hdr/DISEServer.h \
 		../hdr/DISEServerDriver.h \
 		../hdr/Qt.h \
-		../hdr/Environment.h
+		../hdr/Environment.h \
+		../hdr/DISEServerUtil.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DISEServer.o DISEServer.cpp
+
+../bin/DISEServerUtil.o: DISEServerUtil.cpp ../hdr/DISEServerUtil.h \
+		../hdr/DISEServerDriver.h \
+		../hdr/Qt.h \
+		../hdr/Environment.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/DISEServerUtil.o DISEServerUtil.cpp
 
 ../bin/moc_DISEServer.o: moc_DISEServer.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../bin/moc_DISEServer.o moc_DISEServer.cpp

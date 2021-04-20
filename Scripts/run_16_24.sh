@@ -23,11 +23,16 @@ echo "DEALING"
 ./Dealer -d -c ../config/n24t16Local.conf > ../../Scripts/output_16_24/Dealer/Dealer
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT"
-sleep 10
+sleep 1
 
-echo "CLIENT REQUEST"
+echo "CLIENT ENCRYPT REQUEST"
 cd ../../Client/src
-./Client -d > ../../Scripts/output_16_24/Client/Client
+./Client -d > ../../Scripts/output_16_24/Client/Client_enc
+
+sleep 1
+
+echo "CLIENT DECRYPT REQUEST"
+./Client -d -c ../config/dec.conf > ../../Scripts/output_16_24/Client/Client_dec
 
 echo "KILLING DISE SERVERS"
 killall DiseServer

@@ -1,4 +1,5 @@
 #include "../hdr/DISEServer.h"
+#include "../hdr/DISEServerUtil.h"
 
 QT_USE_NAMESPACE
 
@@ -324,10 +325,10 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     ////////////////////////////////////////////////////////////////////////////////
 
     // get paritipant servers
-    QList<int>* participantServers = getParticipantServerList();
+    QList<int>* participantServers = getParticipantServerList(environment->get_N(), environment->get_T(), environment->get_machine_num());
 
     // Decide what keys will be used by each server
-    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers, environment);
 
     // Set up shared partial results int keyId char result and the robust flag
     QMap<int, unsigned char*>* partialResultsMap = new QMap<int, unsigned char*>();
@@ -349,7 +350,7 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
 
     // Encrypt the honest initiator machines keys
     QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
-    QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
+    QMap<int, unsigned char*>* honestPartialResults = encryptWithKeyList(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), environment->get_ref_to_key_list());
 
     // set up w 
     unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
@@ -419,6 +420,9 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
             cipherText[i] = prgw[i] ^ mess_cat_p[i];
         }
 
+        // Free the prgw memory
+        free(prgw);
+
         // Return result to client
         std::cout << "Encryption successful writing to client" << std::endl;
         // write out cipher text
@@ -441,6 +445,9 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
+
+        
+        free(cipherText);
     }
     else
     {
@@ -454,15 +461,24 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         socket->flush();
         socket->waitForBytesWritten(1000);
     }
+
+    free(a_cat_j);
+    free(w);
+    free(mess_cat_p);
+
+    delete partialResultsMap;
+    delete participantServers;
+    serverKeysToUse->clear();
+    delete serverKeysToUse;
 }
 
 void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* cipherText, int cipherTextSize, unsigned char* a_cat_j)
 {
     // get participant servers
-    QList<int>* participantServers = getParticipantServerList();
+    QList<int>* participantServers = getParticipantServerList(environment->get_N(), environment->get_T(), environment->get_machine_num());
 
     // Decide what keys will be used by each server
-    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers);
+    QMap<int, QList<int>*>* serverKeysToUse = getParticipantServerKeyMap(participantServers, environment);
 
     // Set up shared partial results int keyId QByteArray encryption result
     QMap<int, unsigned char*>* partialResultsMap = new QMap<int, unsigned char*>();
@@ -482,7 +498,7 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
 
     // Encrypt the honest init keys
     QList<int>* honestKeysToUse = serverKeysToUse->value(environment->get_machine_num());
-    QMap<int, unsigned char*>* honestPartialResults = encryptDecryptWithKeys(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
+    QMap<int, unsigned char*>* honestPartialResults = encryptWithKeyList(honestKeysToUse, a_cat_j, A_BYTE_SIZE + sizeof(int), environment->get_ref_to_key_list());
 
     // set up w 
     unsigned char* w = (unsigned char *) malloc(A_BYTE_SIZE + sizeof(int));
@@ -611,6 +627,17 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
         socket->waitForBytesWritten(1000);
     }
 
+    free(w);
+    free(newA);
+    free(prgw);
+    free(plainText);
+
+    delete participantServers;
+    delete partialResultsMap;
+
+    serverKeysToUse->clear();
+    delete serverKeysToUse;
+
 }
 
 void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* a_cat_j, QMap<int, unsigned char*>* partialResults, bool* robustFlag)
@@ -703,6 +730,7 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
         QDataStream ds(resultsBuffer);
 
         socket->close();
+        delete socket;
 
         QMap<int, unsigned char*>* myPartialResults = new QMap<int, unsigned char*>();
         for (int i = 0; i < keysToUse->size(); i++)
@@ -751,128 +779,6 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
     QTextStream(stdout) << "Thread for server: " << ip << " " << port << " complete" << "\n";
 }
 
-QMap<int, unsigned char*>* DISEServer::encryptDecryptWithKeys(QList<int>* keyList, unsigned char* message, int msgSize, int mode)
-{
-    QMap<int, unsigned char*>* partialResults = new QMap<int, unsigned char*>();
-
-    // for each key in the keys to use list
-    for (int i = 0; i < keyList->size(); i++)
-    {
-        unsigned char* key = environment->get_ref_to_key_list()->value(keyList->at(i));
-        // where the encrypted or decrypted msg will be saved
-        unsigned char* resultMessage = (unsigned char *)malloc(MAX_CIPHER_LEN);
-        switch(mode)
-        {
-            case 0: // ENCRYPT
-                encrypt(message, msgSize, key, resultMessage);
-                break;
-            case 1: // DECRYPT
-                decrypt(message, msgSize, key, resultMessage);
-                break;
-        }
-        
-        partialResults->insert(keyList->at(i), resultMessage);
-    }
-
-    return partialResults;
-}
-
-int DISEServer::encrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* encryptedMessage) 
-{
-    int ivLen = 12;    
-    unsigned char iv[ivLen];
-    memset(iv, 1, ivLen);
-    int encLen = 0;
-    int finalLen = 0;
-
-    /* Create and initialise the context */
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-
-    // init encryption operation
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv);
-
-    // update the encrypted message
-    EVP_EncryptUpdate(ctx, encryptedMessage, &encLen, message, msgLen);
-
-    // finilize the encryption
-    EVP_EncryptFinal_ex(ctx, encryptedMessage + encLen, &finalLen);
-
-    encLen += finalLen;
-
-    // Clean up
-    EVP_CIPHER_CTX_free(ctx);
-
-    return encLen;
-}
-
-int DISEServer::decrypt(unsigned char* message, int msgLen, unsigned char* key, unsigned char* decryptedMessage) 
-{
-    // TODO FIX THIS AND SEND AN IV WITH KEY IN DEALER STORE IN ENV :'(
-    int ivLen = 12;   
-    unsigned char iv[ivLen];
-    memset(iv, 1, ivLen);
-
-    int decLen = 0;
-    int finalLen = 0;
-
-    // Create Context
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-
-    // initialize decription operation
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv );
-
-    // update the decrypted message
-    EVP_DecryptUpdate(ctx, decryptedMessage, &decLen, message, msgLen);
-
-    // finilize the enc
-    EVP_DecryptFinal_ex(ctx, decryptedMessage + decLen, &finalLen);
-
-    decLen += finalLen;
-
-    // Clean up
-    EVP_CIPHER_CTX_free(ctx);
-
-    return decLen;
-}
-
-unsigned int DISEServer::cryptoHash(unsigned char* data, int dataLen, unsigned char* result) 
-{
-    unsigned int resultLen;
-
-    // EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-    EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
-
-    EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
-
-    EVP_DigestUpdate(mdctx, data, dataLen);
-
-    // result = (unsigned char *)OPENSSL_malloc(EVP_MD_size( EVP_sha256()));
-
-    EVP_DigestFinal_ex(mdctx, result, &resultLen);
-
-    EVP_MD_CTX_free(mdctx);
-    
-    return resultLen;
-}
-
-void DISEServer::randomNumberWithSeed(unsigned char* seed, int seedLen, unsigned char* result, int resultSize) 
-{
-    // RAND_seed(seed, seedLen);
-    // RAND_bytes(result, resultSize);
-    for (int i = 0; i < resultSize; i++) 
-    {
-        result[i] = seed[i % seedLen] * 2;
-    }
-
-    // mbedtls_hmac_drbg_context *ctx;
-    // mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
-
-    // mbedtls_hmac_drbg_init(  ctx );
-
-	// mbedtls_hmac_drbg_init(ctx);
-    // mbedtls_hmac_drbg_seed_buf(ctx, mbedtls_md_info_from_type(md_type), seed, seedLen);
-}
-
 void DISEServer::handleHonestInitiator(QTcpSocket* socket)
 {
 
@@ -916,7 +822,7 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
         a_cat_j[i] = ch;
     }
 
-    QMap<int, unsigned char*>* partialResults = encryptDecryptWithKeys(keyList, a_cat_j, A_BYTE_SIZE + sizeof(int), ENCRYPTION);
+    QMap<int, unsigned char*>* partialResults = encryptWithKeyList(keyList, a_cat_j, A_BYTE_SIZE + sizeof(int), environment->get_ref_to_key_list());
 
     // Create a data stream to the socket
     QByteArray block;
@@ -966,142 +872,13 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
     socket->close();
 
     QTextStream(stdout) << "Wrote: " << QString::number(bytesWritten) + " to Honest Initiator Server" << "\n";
-
-
     QTextStream(stdout) << "Honest Initiator Transaction Complete" << "\n";
-}
 
-QList<int>* DISEServer::getParticipantServerList()
-{
-    // Random combination of t other participant servers
-    QList<int>* partipantServerNumbers = new QList<int>();
-    // Populate list of server options
-    QList<int>* serverOptions = new QList<int>();
-    for (int i = 0; i < environment->get_N(); i++)
+    QMap<int, unsigned char*>::iterator freeIter;
+    for (freeIter = partialResults->begin(); freeIter != partialResults->end(); ++ freeIter)
     {
-        // contains every server excluding the honest initiator
-        if (i != environment->get_machine_num())
-        {
-            serverOptions->append(i);
-        }
+        free(resultIter.value());
     }
+    delete partialResults;
 
-    // select participants randomly
-    srand(time(NULL));
-    for (int i = 0; i < environment->get_T(); i++)
-    {
-        int partipantIndex = rand() % serverOptions->size();
-        partipantServerNumbers->append(serverOptions->at(partipantIndex));
-        serverOptions->removeAt(partipantIndex);
-    }
-
-    // Free memory
-    delete serverOptions;
-
-    return partipantServerNumbers;
-}
-
-void DISEServer::printServerKeysToUse(QMap<int, QList<int>*>* serverKeysToUse)
-{
-    // iterate through n machines held keys
-    QMap<int, QList<int>*>::iterator serverIter;
-    for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
-    {
-        std::cout << "\t" << serverIter.key() << ": ";
-
-        // print key values in omega row
-        QList<int>* keysToUse = serverIter.value();
-
-        for (int i = 0; i < keysToUse->size(); i++)
-            std::cout << keysToUse->at(i) << " ";
-        
-        std::cout << "\n";
-    }
-}
-
-QMap<int, QList<int>*>* DISEServer::getParticipantServerKeyMap(QList<int>* participantServers)
-{
-
-    QMap<int, QList<int>*>* serverKeysToUse = new QMap<int, QList<int>*>();
-    QMap<int, int>* numberOfKeysAssigned = new QMap<int, int>();
-    
-    // Zero out the num keys assigned
-    for (int i = 0; i < participantServers->size(); i++)
-    {
-        numberOfKeysAssigned->insert(participantServers->at(i), 0);
-        serverKeysToUse->insert(participantServers->at(i), new QList<int>());
-    }
-
-    int honestInit = environment->get_machine_num();
-    serverKeysToUse->insert(honestInit, new QList<int>());
-
-    // Go through each key to decide what machines will use what key
-    for (int keyId = 0; keyId < environment->get_total_key_num(); keyId++)
-    {
-        // if the honest doesn't own this key assign it to two servers
-        if (!environment->server_owns_key(honestInit, keyId))
-        {
-            // Assign the key to the two servers with the least keys that hold the key
-            int firstLeastKeysAssigned = INT_MIN;
-            int firstLeastKeysAssignedId = INT_MIN;
-            int secondLeastKeysAssigned = INT_MIN;
-            int secondLeastKeysAssignedId = INT_MIN;
-            // for each partipating server
-            for (int i = 0; i < participantServers->size(); i++)
-            {
-                if (environment->server_owns_key(participantServers->at(i), keyId))
-                {
-                    int numKeysAssigned = numberOfKeysAssigned->value(participantServers->at(i));
-                    if (firstLeastKeysAssigned == INT_MIN) // First least keys unset
-                    {
-                        firstLeastKeysAssigned = numKeysAssigned;
-                        firstLeastKeysAssignedId = participantServers->at(i);
-                    }
-                    else if (secondLeastKeysAssigned) // Second Least unset
-                    {
-                        secondLeastKeysAssigned = numKeysAssigned;
-                        secondLeastKeysAssignedId = participantServers->at(i);
-                    }
-                    else
-                    {
-                        if (numKeysAssigned > secondLeastKeysAssigned && numKeysAssigned > firstLeastKeysAssigned)
-                        {
-                            secondLeastKeysAssigned = firstLeastKeysAssigned;
-                            secondLeastKeysAssignedId = firstLeastKeysAssignedId;
-                            firstLeastKeysAssigned = numKeysAssigned;
-                            firstLeastKeysAssignedId = participantServers->at(i);
-                        }
-                        else if (numKeysAssigned > secondLeastKeysAssigned)
-                        {
-                            secondLeastKeysAssigned = numKeysAssigned;
-                            secondLeastKeysAssignedId = participantServers->at(i);
-                        }
-                    }
-                }
-            }
-
-            // update the num keys assigned
-            int newAmountOfKeysHeld = numberOfKeysAssigned->value(firstLeastKeysAssignedId);
-            numberOfKeysAssigned->insert(firstLeastKeysAssignedId, newAmountOfKeysHeld++);
-            newAmountOfKeysHeld = numberOfKeysAssigned->value(secondLeastKeysAssignedId);
-            numberOfKeysAssigned->insert(secondLeastKeysAssignedId, newAmountOfKeysHeld++);
-
-            // Assign keys
-            // std::cout << "(" << firstLeastKeysAssignedId << " " << secondLeastKeysAssignedId << " " << keyId << ") " << std::flush;
-            QList<int>* curKeysFirst = serverKeysToUse->value(firstLeastKeysAssignedId);
-            QList<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
-            curKeysFirst->append(keyId);
-            curKeysSecond->append(keyId);
-        }
-        else // owned by the honest init
-        {
-            QList<int>* curKeys = serverKeysToUse->value(honestInit);
-            curKeys->append(keyId);
-        }
-    }
-
-    // Free memory
-    delete numberOfKeysAssigned;
-
-    return serverKeysToUse;
 }

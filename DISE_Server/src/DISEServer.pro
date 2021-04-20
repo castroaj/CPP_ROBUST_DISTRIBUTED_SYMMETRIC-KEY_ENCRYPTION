@@ -9,14 +9,16 @@ CONFIG += app_bundle
 SOURCES += \
     DISEServerDriver.cpp \
     Environment.cpp \
-    DISEServer.cpp
+    DISEServer.cpp \
+    DISEServerUtil.cpp
     
 
 HEADERS += \
     ../hdr/DISEServerDriver.h \
     ../hdr/Environment.h \
     ../hdr/Qt.h \
-    ../hdr/DISEServer.h
+    ../hdr/DISEServer.h \ 
+    ../hdr/DISEServerUtil.h
     
 
 QMAKE_CXXFLAGS += -fopenmp

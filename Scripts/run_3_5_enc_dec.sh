@@ -21,14 +21,14 @@ echo "DEALING"
 ./Dealer -d -c ../config/n5t3Local.conf > ../../Scripts/output_3_5_enc/Dealer/Dealer 
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT"
-sleep 5
+sleep 20
 
 echo "CLIENT REQUEST ENC"
 cd ../../Client/src
 ./Client -d > ../../Scripts/output_3_5_enc/Client/Client
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT DEC REQUEST"
-sleep 10
+sleep 20
 
 echo "CLIENT REQUEST DEC"
 cd ../../Client/src
