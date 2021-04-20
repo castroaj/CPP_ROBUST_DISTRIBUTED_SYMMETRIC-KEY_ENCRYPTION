@@ -28,7 +28,7 @@ cd ../../Client/src
 ./Client -d > ../../Scripts/output_3_5_enc/Client/Client
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT DEC REQUEST"
-sleep 20
+sleep 30
 
 echo "CLIENT REQUEST DEC"
 cd ../../Client/src

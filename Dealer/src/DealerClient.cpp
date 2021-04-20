@@ -4,6 +4,7 @@ DealerClient::DealerClient(bool d, QObject *parent) :
     QObject(parent)
 {
     debug = d;
+    totalBytesWritten = 0;
 }
 
 DealerClient::~DealerClient()
@@ -19,9 +20,6 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
     connect(socket, SIGNAL(disconnected()),this, SLOT(disconnected()));
     connect(socket, SIGNAL(bytesWritten(qint64)),this, SLOT(bytesWritten(qint64)));
     connect(socket, SIGNAL(readyRead()),this, SLOT(readyRead()));
-
-    if (debug)
-        QTextStream(stdout) << "connecting..." << "\n";
 
     socket->connectToHost(ip, port);
 
@@ -127,32 +125,29 @@ void DealerClient::doConnect(KeyGenerator* key_gen, QString ip, int port, int ma
             socket->waitForBytesWritten(1000);
         }
 
-        QTextStream(stdout) << "The number of bytes written is: " << bytesWritten << "\n";
+        QTextStream(stdout) << "The number of bytes written to   " << ip << ":" << port << "   is: " << bytesWritten << "\n";
 
         socket->close();
     }
     else
-    {
-        QTextStream(stdout) << "Not connected" << "\n";
+    {   
+        if (debug)
+            QTextStream(stdout) << "Failed to connect to " << ip << ":" << port << "\n";
     }
 }
 
 void DealerClient::connected()
-{
-    if (debug)
-        QTextStream(stdout) << "connected..." << "\n";
-}
+{}
 
 void DealerClient::disconnected()
 {
     if (debug)
-        QTextStream(stdout) << "disconnected..." << "\n";
+        QTextStream(stdout) << "disconnected... " << "total bytes written: " << totalBytesWritten << "\n\n";
 }
 
 void DealerClient::bytesWritten(qint64 bytes)
 {
-    if (debug)
-        QTextStream(stdout) << bytes << " bytes written..." << "\n";
+    totalBytesWritten += bytes;
 }
 
 void DealerClient::readyRead()

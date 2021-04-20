@@ -103,6 +103,4 @@ int main(int argc, char* argv[])
 
     DISEServer server(port, debug, environment);
     app.exec();
-
-
 }

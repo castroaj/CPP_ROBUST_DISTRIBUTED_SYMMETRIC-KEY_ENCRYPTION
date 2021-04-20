@@ -23,5 +23,6 @@
             QTcpSocket *socket;
             bool debug;
             int port;
+            qint64 totalBytesWritten;
     };      
 #endif

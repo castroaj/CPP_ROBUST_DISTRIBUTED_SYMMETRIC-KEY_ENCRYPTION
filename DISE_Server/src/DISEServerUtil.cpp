@@ -149,8 +149,7 @@ QList<int>* getParticipantServerList(int n, int t, int machineNum)
 void printServerKeysToUse(QMap<int, QList<int>*>* serverKeysToUse)
 {
     // iterate through n machines held keys
-    QMap<int, QList<int>*>::iterator serverIter;
-    for (serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
+    for (QMap<int, QList<int>*>::iterator serverIter = serverKeysToUse->begin(); serverIter != serverKeysToUse->end(); ++serverIter)
     {
         std::cout << "\t" << serverIter.key() << ": ";
 

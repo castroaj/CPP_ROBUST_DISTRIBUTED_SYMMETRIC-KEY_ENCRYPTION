@@ -153,10 +153,8 @@ int main(int argc, char* argv[])
         QString ip = l.at(0);
         QString port = l.at(1);
 
-        if (debug)
-            QTextStream(stdout) << ip << " " << port.toInt() << "\n";
-
         client->doConnect(key_gen, ip, port.toInt(), i, addresses);
+
         delete client;
     }
 

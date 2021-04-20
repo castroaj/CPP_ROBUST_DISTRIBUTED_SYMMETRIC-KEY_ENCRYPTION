@@ -357,8 +357,7 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
 
     // xor honest init results into w
-    QMap<int, unsigned char*>::iterator honestResultIter;
-    for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
+    for (QMap<int, unsigned char*>::iterator honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
     {
         unsigned char* curMessage = honestResultIter.value();
 
@@ -396,10 +395,8 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     if (robustFlag)
     { 
         // No partipating server was compromised finish encryptions
-
         // Join the other servers results into the final w
-        QMap<int, unsigned char*>::iterator participantResultIter;
-        for (participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
+        for (QMap<int, unsigned char*>::iterator participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
         {
             unsigned char* curMessage = participantResultIter.value();
 
@@ -505,8 +502,7 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     memset(w, 0x0, A_BYTE_SIZE + sizeof(int));
 
     // xor honest init results
-    QMap<int, unsigned char*>::iterator honestResultIter;
-    for (honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
+    for (QMap<int, unsigned char*>::iterator honestResultIter = honestPartialResults->begin(); honestResultIter != honestPartialResults->end(); ++honestResultIter)
     {
         unsigned char* curMessage = honestResultIter.value();
 
@@ -554,8 +550,7 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     }
         
     // Join the other servers results into the final w
-    QMap<int, unsigned char*>::iterator participantResultIter;
-    for (participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
+    for (QMap<int, unsigned char*>::iterator participantResultIter = partialResultsMap->begin(); participantResultIter != partialResultsMap->end(); ++participantResultIter)
     {
         unsigned char* curMessage = participantResultIter.value();
 
@@ -674,6 +669,7 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
             out << a_cat_j[i];
         }
 
+
         // Write total size of the message
         QByteArray totalSize;
         QDataStream outSize(&totalSize, QIODevice::WriteOnly);
@@ -749,8 +745,7 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
 
         mtx->lock();
         // Do the robust check and add to total results
-        QMap<int, unsigned char*>::iterator resultsIter;
-        for (resultsIter = myPartialResults->begin(); resultsIter != myPartialResults->end() && *robustFlag; ++resultsIter)
+        for (QMap<int, unsigned char*>::iterator resultsIter = myPartialResults->begin(); resultsIter != myPartialResults->end() && *robustFlag; ++resultsIter)
         {
             int keyId = resultsIter.key();
 
