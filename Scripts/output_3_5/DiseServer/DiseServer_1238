@@ -1,0 +1,58 @@
+Server Listening on port 1238
+Socket Disconnected
+Dealer Message Recieved
+Total Size Recieved 488
+Omega Matrix Size 30
+ENVIRONMENT:
+	Thread Count: 2
+	MachineNum: 4
+	TotalKeys: 10
+	KeysPerMachine: 6
+	SizeOfEachKey: 32
+	N: 5
+	T: 3
+	ADDRESSES:
+	0: localhost:1234
+	1: localhost:1235
+	2: localhost:1236
+	3: localhost:1237
+	4: localhost:1238
+	KEY LIST:
+	2: 9c e7 16 af 2a ef fc af 0 e5 d7 23 68 76 43 83 bf b3 f8 e5 b9 bd aa f4 4a 37 11 cd 73 a2 39 e8 
+	4: 4a 56 27 99 fa b 1f 8b b1 aa 1b 32 2f 3c fa 7c 3 90 e4 4c ea 64 15 6f 99 99 37 fb d0 7f 88 de 
+	5: 5e 92 b3 79 6e 15 a4 5e aa 92 41 ab 8a 14 a 95 f4 1f d4 a8 f7 70 38 83 87 6e a9 0 24 12 3a 5b 
+	7: 74 76 68 bf 87 3d 89 e6 0 66 3a 48 ff 44 4c e0 18 c8 1d 45 ca 90 7 77 a8 af 4f 66 ed b9 b6 78 
+	8: 19 78 40 7f 71 f8 c5 0 ad 8e b6 50 0 b8 5c da c1 2e 45 62 80 75 36 41 52 80 3a 57 74 b af 7d 
+	9: f 67 e7 ee 17 8 1f bd 21 6f a7 3e 27 22 90 e2 d2 4b f8 51 7a d8 ea 64 ed 6 ea f8 65 c6 87 3 
+	OMEGA MATRIX
+	0: 1 0 3 2 5 4 
+	1: 6 1 0 2 8 7 
+	2: 6 0 3 9 4 7 
+	3: 6 1 3 9 8 5 
+	4: 2 9 8 5 4 7 
+Dealer Transaction Complete
+Honest Initiator Message Recieved
+Socket Disconnected
+Wrote: 80 to Honest Initiator Server
+Honest Initiator Transaction Complete
+Client Message Recieved
+Decrypting
+Honest Initiator Creating Threads
+Honest Initiator Joining Threads
+thread going
+Thread Connected 
+Wrote: 48 to Participant Server
+thread going
+Thread Connected 
+Wrote: 52 to Participant Server
+thread going
+Thread Connected 
+Wrote: 52 to Participant Server
+Thread for server: localhost 1235 complete
+Thread for server: localhost 1237 complete
+Thread for server: localhost 1236 complete
+Threads Joined
+Resulting Plain Text
+Hello This is the CS 470 41 Byte Message!
+Socket Disconnected
+Client Transaction Complete
