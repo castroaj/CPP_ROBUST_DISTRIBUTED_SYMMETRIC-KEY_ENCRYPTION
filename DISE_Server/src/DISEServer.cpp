@@ -872,7 +872,7 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
     QMap<int, unsigned char*>::iterator freeIter;
     for (freeIter = partialResults->begin(); freeIter != partialResults->end(); ++ freeIter)
     {
-        free(resultIter.value());
+        free(freeIter.value());
     }
     delete partialResults;
 

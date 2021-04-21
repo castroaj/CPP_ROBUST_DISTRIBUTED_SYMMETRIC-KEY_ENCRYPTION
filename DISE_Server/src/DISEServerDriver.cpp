@@ -77,12 +77,14 @@ int main(int argc, char* argv[])
     QCommandLineOption dbgOption(QStringList() << "d" << "debug", QCoreApplication::translate("main", "Debug Output [default: off]."));
     QCommandLineOption portOption(QStringList() << "p" << "port", QCoreApplication::translate("main", "Port for server [default: 1234]"), QCoreApplication::translate("main", "port"), QLatin1String("1234"));
     QCommandLineOption configOption(QStringList() << "c" << "config", "Fullpath and extension of input <file>", "file");
+    QCommandLineOption compromisedOption(QStringList() << "e" << "compromised", "Evil flag (compromised server)", "");
     
     parser.setApplicationDescription("Networking Setup");
     parser.addHelpOption();
     parser.addOption(dbgOption);
     parser.addOption(portOption);
     parser.addOption(configOption);
+    parser.addOption(compromisedOption);
     parser.process(app);
 
     QString inputFileName = parser.value(configOption);
@@ -99,6 +101,11 @@ int main(int argc, char* argv[])
     {
         if (!setup_env_with_conf("../config/Setup.conf", environment))
             return EXIT_FAILURE;
+    }
+
+    if (!parser.isSet(c))
+    {
+        
     }
 
     DISEServer server(port, debug, environment);

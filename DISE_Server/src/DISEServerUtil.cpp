@@ -87,6 +87,12 @@ void randomNumberWithSeed(unsigned char* seed, int seedLen, unsigned char* resul
         result[i] = seed[i % seedLen] * 2;
     }
 
+    // Poco::HMACEngine<Poco::Crypto::SHA256> hmac = new HMACEngine(seed, seedLen);
+    // Poco::HMACEngine<SHA256Engine> hmac{secretKey};
+    // hmac.update(string);
+
+    // hmac.updateImpl(result, resultSize);
+
     // mbedtls_hmac_drbg_context *ctx;
     // mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
 
@@ -102,6 +108,7 @@ QMap<int, unsigned char*>* encryptWithKeyList(QList<int>* keyList, unsigned char
     QMap<int, unsigned char*>* partialResults = new QMap<int, unsigned char*>();
 
     // for each key in the keys to use list
+    #pragma omp parallel for default(none) shared(completeKeyList, keyList, message, msgSize, partialResults) 
     for (int i = 0; i < keyList->size(); i++)
     {
         unsigned char* key = completeKeyList->value(keyList->at(i));

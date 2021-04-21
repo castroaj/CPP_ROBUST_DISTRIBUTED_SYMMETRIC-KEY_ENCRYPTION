@@ -12,6 +12,7 @@
             int totalKeyNum;
             int N;
             int T;
+            bool compromised;
 
             QList<QPair<QString, int>*>* addresses;
             QMap<int, QSet<int>*>* omegaTable;
@@ -54,6 +55,9 @@
             void set_ref_to_key_list(QMap<int, unsigned char*>* kl) { keyList = kl; }
 
             bool server_owns_key(int server, int keyId);
+
+            bool compromised() { return compromised; }
+            bool setCompromised(bool compromised) { compromised; }
     };
 
 #endif

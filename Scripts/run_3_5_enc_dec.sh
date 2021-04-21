@@ -16,25 +16,29 @@ for i in "${ports[@]}"; do
     ./DiseServer -d -p $i > ../../Scripts/output_3_5_enc/DiseServer/DiseServer_$i &
 done
 
+echo "SLEEPING TO ALLOW FOR DISE SERVERS TO START BEFORE DEALING"
+sleep 10
+
 cd ../../Dealer/src
 echo "DEALING"
 ./Dealer -d -c ../config/n5t3Local.conf > ../../Scripts/output_3_5_enc/Dealer/Dealer 
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT"
-sleep 20
+sleep 10
 
 echo "CLIENT REQUEST ENC"
 cd ../../Client/src
 ./Client -d > ../../Scripts/output_3_5_enc/Client/Client
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE CLIENT DEC REQUEST"
-sleep 30
+sleep 10
 
 echo "CLIENT REQUEST DEC"
 cd ../../Client/src
 ./Client -d -c ../config/dec.conf > ../../Scripts/output_3_5_enc/Client/Client
 
 echo "SLEEPING TO ALLOW FOR COMMUNICATION BEFORE KILLING SERVERS"
+sleep 10
 
 echo "KILLING DISE SERVERS"
 killall DiseServer

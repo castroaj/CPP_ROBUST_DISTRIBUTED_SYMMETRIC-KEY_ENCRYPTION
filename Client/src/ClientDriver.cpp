@@ -179,7 +179,11 @@ int main(int argc, char* argv[])
             in >> a_cat_j[i];
         }
 
+        double duration = 0;
+        std::clock_t start = std::clock();
         client->doConnect(ip, port.toInt(), environment->get_enc_mode(), cipherText, sizeOfCipherText, a_cat_j, 32 + sizeof(int));
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout<< "Decryption Time : " << duration <<'\n';
 
         free(a_cat_j);
         free(cipherText);
@@ -197,8 +201,13 @@ int main(int argc, char* argv[])
             plainText[i] = data[i].toLatin1();
         }
 
+        double duration = 0;
+        std::clock_t start = std::clock();
         client->doConnect(ip, port.toInt(), environment->get_enc_mode(), plainText, sizeOfPlainText, NULL, 0);
-        
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout<< "Encryption Time : " << duration <<'\n';
+
+        // free memory 
         free(plainText);
     }
     
