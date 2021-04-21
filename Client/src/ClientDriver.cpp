@@ -144,9 +144,11 @@ int main(int argc, char* argv[])
     QList<QString>* addresses = environment->get_ref_to_addresses();
 
     srand(time(NULL));
-    int honestInitiatorIndex = rand() % addresses->size();
+    //int honestInitiatorIndex = rand() % addresses->size();
+    int honestInitiatorIndex = 0;
 
-    Client client(debug);
+
+    Client* client = new Client(debug);
 
     QString curString = addresses->at(honestInitiatorIndex);
     QStringList l = curString.split(QLatin1Char(':'));
@@ -177,7 +179,7 @@ int main(int argc, char* argv[])
             in >> a_cat_j[i];
         }
 
-        client.doConnect(ip, port.toInt(), environment->get_enc_mode(), cipherText, sizeOfCipherText, a_cat_j, 32 + sizeof(int));
+        client->doConnect(ip, port.toInt(), environment->get_enc_mode(), cipherText, sizeOfCipherText, a_cat_j, 32 + sizeof(int));
 
         free(a_cat_j);
         free(cipherText);
@@ -195,13 +197,14 @@ int main(int argc, char* argv[])
             plainText[i] = data[i].toLatin1();
         }
 
-        client.doConnect(ip, port.toInt(), environment->get_enc_mode(), plainText, sizeOfPlainText, NULL, 0);
+        client->doConnect(ip, port.toInt(), environment->get_enc_mode(), plainText, sizeOfPlainText, NULL, 0);
         
         free(plainText);
     }
     
 
     delete environment;
+    delete client;
 
     std::cout << "Client Finished" << std::endl;
 }
