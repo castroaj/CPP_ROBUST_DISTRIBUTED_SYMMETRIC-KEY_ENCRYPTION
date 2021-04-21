@@ -2,6 +2,7 @@
 
 Environment::Environment()
 {
+    set_compromised(false);
 }
 
 Environment::~Environment()
@@ -20,6 +21,10 @@ void Environment::print_environment()
     cout << "\tSizeOfEachKey: " << sizeOfEachKey << endl;
     cout << "\tN: " << N << endl;
     cout << "\tT: " << T << endl;
+    if (compromised)
+    {
+        cout << "\tCompromised" << endl;
+    }
 
     cout << "\tADDRESSES:" << endl;
     

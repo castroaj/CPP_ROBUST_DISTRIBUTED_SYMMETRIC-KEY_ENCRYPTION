@@ -387,11 +387,6 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     QDataStream out(&block, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_5);
 
-    // Write total size of the message
-    QByteArray totalSize;
-    QDataStream outSize(&totalSize, QIODevice::WriteOnly);
-    outSize.setVersion(QDataStream::Qt_4_5);
-
     if (robustFlag)
     { 
         // No partipating server was compromised finish encryptions
@@ -435,10 +430,6 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         {
             out << a_cat_j[i];
         }
-        outSize << block.size();
-        socket->write(totalSize);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
@@ -450,10 +441,6 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     {
         // Write out compromised server message
         out << robustFlag;
-        outSize << uint32_t(sizeof(int));
-        socket->write(totalSize);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
@@ -528,21 +515,12 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     QDataStream out(&block, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_5);
 
-    // Write total size of the message
-    QByteArray totalSize;
-    QDataStream outSize(&totalSize, QIODevice::WriteOnly);
-    outSize.setVersion(QDataStream::Qt_4_5);
-
     // Check if the threads found a non redundent partial w between the other partipant servers
     if (!robustFlag)
     {
         // Early termination there was a redundancy issue
         // Write out compromised server message
         out << robustFlag;
-        outSize << uint32_t(sizeof(int));
-        socket->write(totalSize);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
@@ -600,11 +578,7 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
         }
         std::cout << std::endl;
 
-        // Write total size
-        outSize << block.size();
-        socket->write(totalSize);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
+        // Write everything out
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
@@ -613,10 +587,6 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     {
         // Write out compromised server message, hash was not good
         out << robustFlag;
-        outSize << uint32_t(sizeof(int));
-        socket->write(totalSize);
-        socket->flush();
-        socket->waitForBytesWritten(1000);
         socket->write(block);
         socket->flush();
         socket->waitForBytesWritten(1000);
@@ -815,6 +785,12 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
         unsigned char ch;
         ds >> ch;
         a_cat_j[i] = ch;
+    }
+    
+    // Sabotage the encryption if you're compromised
+    if (environment->is_compromised())
+    {
+        memset(a_cat_j, 0, A_BYTE_SIZE + sizeof(int));
     }
 
     QMap<int, unsigned char*>* partialResults = encryptWithKeyList(keyList, a_cat_j, A_BYTE_SIZE + sizeof(int), environment->get_ref_to_key_list());

@@ -175,12 +175,10 @@ QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* participantServer
 {
 
     QMap<int, QList<int>*>* serverKeysToUse = new QMap<int, QList<int>*>();
-    QMap<int, int>* numberOfKeysAssigned = new QMap<int, int>();
     
     // Zero out the num keys assigned
     for (int i = 0; i < participantServers->size(); i++)
     {
-        numberOfKeysAssigned->insert(participantServers->at(i), 0);
         serverKeysToUse->insert(participantServers->at(i), new QList<int>());
     }
 
@@ -203,7 +201,7 @@ QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* participantServer
             {
                 if (environment->server_owns_key(participantServers->at(i), keyId))
                 {
-                    int numKeysAssigned = numberOfKeysAssigned->value(participantServers->at(i));
+                    int numKeysAssigned = serverKeysToUse->value(participantServers->at(i))->size();
                     if (firstLeastKeysAssigned == INT_MIN) // First least keys unset
                     {
                         firstLeastKeysAssigned = numKeysAssigned;
@@ -232,14 +230,7 @@ QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* participantServer
                 }
             }
 
-            // update the num keys assigned
-            int newAmountOfKeysHeld = numberOfKeysAssigned->value(firstLeastKeysAssignedId);
-            numberOfKeysAssigned->insert(firstLeastKeysAssignedId, newAmountOfKeysHeld++);
-            newAmountOfKeysHeld = numberOfKeysAssigned->value(secondLeastKeysAssignedId);
-            numberOfKeysAssigned->insert(secondLeastKeysAssignedId, newAmountOfKeysHeld++);
-
             // Assign keys
-            // std::cout << "(" << firstLeastKeysAssignedId << " " << secondLeastKeysAssignedId << " " << keyId << ") " << std::flush;
             QList<int>* curKeysFirst = serverKeysToUse->value(firstLeastKeysAssignedId);
             QList<int>* curKeysSecond = serverKeysToUse->value(secondLeastKeysAssignedId);
             curKeysFirst->append(keyId);
@@ -251,9 +242,6 @@ QMap<int, QList<int>*>* getParticipantServerKeyMap(QList<int>* participantServer
             curKeys->append(keyId);
         }
     }
-
-    // Free memory
-    delete numberOfKeysAssigned;
 
     return serverKeysToUse;
 }

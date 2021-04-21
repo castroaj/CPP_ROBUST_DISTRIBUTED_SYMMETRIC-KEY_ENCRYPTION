@@ -56,8 +56,8 @@
 
             bool server_owns_key(int server, int keyId);
 
-            bool compromised() { return compromised; }
-            bool setCompromised(bool compromised) { compromised; }
+            bool is_compromised() { return compromised; }
+            void set_compromised(bool comp) { compromised = comp; }
     };
 
 #endif

@@ -94,27 +94,32 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char
 
         ///////////////////////////////////////////////////////////////////
 
+        // // Wait for results from DISE Servers
+        // socket->waitForReadyRead();
+        // QByteArray totalSizeBuffer = socket->read(sizeof(int));
+        // QDataStream tsDs(totalSizeBuffer);
+
+        // int totalReadSize = 0;
+        // tsDs >> totalReadSize;
+
+        // // Create a data stream to read from the socket
+        // QByteArray resultsBuffer;
+        // QByteArray tmpBuffer;
+
+        // std::cout << "here" << std::endl;
+
+        // while (resultsBuffer.size() < totalReadSize)
+        // {
+        //     socket->waitForReadyRead(1000);
+        //     tmpBuffer = socket->read(30000);
+        //     resultsBuffer.append(tmpBuffer);
+        // }
+
+        // QDataStream ds(resultsBuffer);
+
         // Wait for results from DISE Servers
         socket->waitForReadyRead();
-        QByteArray totalSizeBuffer = socket->read(sizeof(int));
-        QDataStream tsDs(totalSizeBuffer);
-
-        int totalReadSize = 0;
-        tsDs >> totalReadSize;
-
-        // Create a data stream to read from the socket
-        QByteArray resultsBuffer;
-        QByteArray tmpBuffer;
-
-        std::cout << "here" << std::endl;
-
-        while (resultsBuffer.size() < totalReadSize)
-        {
-            socket->waitForReadyRead(1000);
-            tmpBuffer = socket->read(30000);
-            resultsBuffer.append(tmpBuffer);
-        }
-
+        QByteArray resultsBuffer = socket->readAll();
         QDataStream ds(resultsBuffer);
 
         std::cout << "here" << std::endl;
