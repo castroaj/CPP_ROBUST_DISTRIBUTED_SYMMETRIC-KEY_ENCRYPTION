@@ -24,4 +24,4 @@ WORKDIR /usr/src/Dealer
 RUN cd src && qmake && make
 
 # run the server
-CMD ["./src/DealerDriver"]
+CMD ./src/Dealer -c ./config/Setup.conf
