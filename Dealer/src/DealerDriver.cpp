@@ -142,6 +142,8 @@ int main(int argc, char* argv[])
 
     QList<QString>* addresses = environment->get_ref_to_addresses();
 
+    double duration = 0;
+    std::clock_t start = std::clock();
 
     #pragma omp parallel for
     for (int i = 0; i < addresses->size(); i++)
@@ -157,6 +159,9 @@ int main(int argc, char* argv[])
 
         delete client;
     }
+    
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    std::cout<< "Dealer Time : " << duration <<'\n';
 
     std::cout << "Dealer Finished" << std::endl;
     
