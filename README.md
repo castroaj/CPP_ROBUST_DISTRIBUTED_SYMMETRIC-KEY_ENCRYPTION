@@ -61,41 +61,46 @@ Professor Wang's paper: [Robust distributed symmetric-key encryption](https://ep
 ---
 ## Overview of Roles
 
-### Driver
+### Driver/Dealer
+1. Generate all the keys
 1. Generate the Key Matrix
-2. Generate all the Keys
-3. Send to each dise server: 
- The key matrix
- The other server's ip addresses
- The partial keys to that dise server
+3. Send to each DiSE server: 
+ -The omega matrix of keys
+ -The omega table size
+ -The list of keys, respective to its assigned machine
+ -The total key count
+ -The size of a key
+ -The total number of machines, n
+ -The number of participating servers, t
+ -ip addresses and ports
+
+### DisE Server
+1. Wait indefinitely for a transaction from either:
+ -A client, where an honest initiator process will be spawned
+ -A honest initiator, where a participant server will be spawned
 
 ### Client
-1. Randomly choose an honest initiator of the dise servers
-2. Send to the randomly chosen honest initiator:
- Whether it is encryption or decryption
- The message to encrypt or decrypt
-
-### Dise Server
-1. Check if there are existing keys
-2. If not wait for a dealer to send the keys
-3. Wait indefinitely for a transaction from either:
- A client where an honest initiator process will be spawned
- A honest initiator where a participant server will be spawned
-
+1. Determine whether or not it is encryption or decryption mode
+2. Receive the message to encrypt or decrypt
+3. Randomly choose an honest initiator of the DiSE servers
+4. Send to the randomly chosen honest initiator:
+ -Whether it is encryption or decryption
+ -The message to encrypt or decrypt
+ 
 #### Honest Initiator
-1. Randomly select participant servers
-2. Split the message up into t parts
-3. Send to a random combination of participant servers:
- Whether it is encryption or decryption
- What keys those servers will use
- The partial message
-4. Encrypt or decrypt with all of the owned keys
+1. Randomly select t participant servers
+2. Split the message to encrypt or decrypt into t parts
+3. Send to the participating client on behalf of the client:
+ -Whether it is encryption or decryption
+ -What keys those servers will use
+ -The partial message
+4. Wait to receive partial results from t participating servers
 5. Receive all partial results
-6. Compare the partial results to determine if there was a compromised participating server
+6. Robust check to determine if there was a compromised participating server
 7. Compile the partial results into the final message
 8. Send to the client:
- The resulting message
- If there was a compromised server
+ -The resulting message
+ -If there was a compromised server
 9. Conclude this transaction
 
 #### Participant Server
