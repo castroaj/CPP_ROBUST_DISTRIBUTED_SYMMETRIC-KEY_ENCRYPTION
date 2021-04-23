@@ -426,7 +426,7 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
         }
         // write out a||j
         out << uint32_t(A_BYTE_SIZE + sizeof(int));
-        for (long unsigned int i = 0; i < sizeOfMessage + sizeof(long); i++)
+        for (long unsigned int i = 0; i < A_BYTE_SIZE + sizeof(int); i++)
         {
             out << a_cat_j[i];
         }
@@ -452,6 +452,8 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
 
     delete partialResultsMap;
     delete participantServers;
+
+    qDeleteAll(*serverKeysToUse);
     serverKeysToUse->clear();
     delete serverKeysToUse;
 }
@@ -600,8 +602,15 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     delete participantServers;
     delete partialResultsMap;
 
+    qDeleteAll(*serverKeysToUse);
     serverKeysToUse->clear();
     delete serverKeysToUse;
+
+    for (auto freeIter = honestPartialResults->begin(); freeIter != honestPartialResults->end(); ++ freeIter)
+    {
+        free(freeIter.value());
+    }
+    delete honestPartialResults;
 
 }
 
@@ -845,8 +854,7 @@ void DISEServer::handleHonestInitiator(QTcpSocket* socket)
     QTextStream(stdout) << "Wrote: " << QString::number(bytesWritten) + " to Honest Initiator Server" << "\n";
     QTextStream(stdout) << "Honest Initiator Transaction Complete" << "\n";
 
-    QMap<int, unsigned char*>::iterator freeIter;
-    for (freeIter = partialResults->begin(); freeIter != partialResults->end(); ++ freeIter)
+    for (auto freeIter = partialResults->begin(); freeIter != partialResults->end(); ++ freeIter)
     {
         free(freeIter.value());
     }
