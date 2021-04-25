@@ -9,6 +9,9 @@
     #include <stdio.h>
     #include <inttypes.h>
     #include <openssl/rand.h>
+    #include <cstdio>
+    #include <ctime>
+    #include <chrono>
     #include "Qt.h"
 #endif
 

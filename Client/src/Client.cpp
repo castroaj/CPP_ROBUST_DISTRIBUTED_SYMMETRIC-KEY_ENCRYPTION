@@ -26,7 +26,7 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char
 
     if(socket->waitForConnected(3000))
     {
-        QTextStream(stdout) << "Connected to " << ip << port << "\n";
+        QTextStream(stdout) << "Connected to " << ip << " " << port << "\n";
 
         socket->write("1"); // Client
 
@@ -99,16 +99,12 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char
         QByteArray resultsBuffer = socket->readAll();
         QDataStream ds(resultsBuffer);
 
-        std::cout << "here" << std::endl;
-
         // all data recieved close the socket
         socket->close();
 
         // Flag to see if there was a compromised server
         bool robustFlag = false;
         ds >> robustFlag;
-
-        std::cout << robustFlag << std::endl;
 
         // Three possible: successful enc, successful dec, or compromised server
         if (robustFlag && encMode == ENCRYPTION) {
@@ -135,7 +131,9 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char
             }
 
             // Save results of the encryption to use later
-            QFile file("encResult.txt");
+            std::string fileName = "encResult.txt";
+            QString qfileName = fileName.c_str();;
+            QFile file(qfileName);
             if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
                 return;
 
@@ -152,10 +150,12 @@ void Client::doConnect(QString ip, int port, unsigned int encMode, unsigned char
                 fds << a_cat_j_enc[i];
             }
 
+            std::cout << "Writing Successful Encryption to file: " << fileName << std::endl;
+
         }
         else if (robustFlag && encMode == DECRYPTION)
         {
-            std::cout << "Reading Successful Encryption" << std::endl;
+            std::cout << "Reading Successful Decryption" << std::endl;
             // Return Message
             int sizeOfReturnMessage = 0;
             ds >> sizeOfReturnMessage;

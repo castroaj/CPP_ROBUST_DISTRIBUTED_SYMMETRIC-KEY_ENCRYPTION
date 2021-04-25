@@ -144,9 +144,7 @@ int main(int argc, char* argv[])
     QList<QString>* addresses = environment->get_ref_to_addresses();
 
     srand(time(NULL));
-    //int honestInitiatorIndex = rand() % addresses->size();
-    int honestInitiatorIndex = 0;
-
+    int honestInitiatorIndex = rand() % addresses->size();
 
     Client* client = new Client(debug);
 
@@ -154,6 +152,8 @@ int main(int argc, char* argv[])
     QStringList l = curString.split(QLatin1Char(':'));
     QString ip = l.at(0);
     QString port = l.at(1);
+
+    QTextStream(stdout) << "Honest Initiator randomly selected as: " << ip << " " << port << "\n";
 
     // Decrypt will read message
     if (environment->get_enc_mode() == DECRYPTION)
@@ -179,19 +179,16 @@ int main(int argc, char* argv[])
             in >> a_cat_j[i];
         }
 
-        double duration = 0;
-        std::clock_t start = std::clock();
+        auto wcts = std::chrono::system_clock::now();
         client->doConnect(ip, port.toInt(), environment->get_enc_mode(), cipherText, sizeOfCipherText, a_cat_j, 32 + sizeof(int));
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout<< "Decryption Time : " << duration <<'\n';
+        std::chrono::duration<double> wctduration = (std::chrono::system_clock::now() - wcts);
+        std::cout << "Finished in " << wctduration.count() << " seconds [Wall Clock]" << std::endl;
 
         free(a_cat_j);
         free(cipherText);
     }
     else
     {
-        if (debug)
-            QTextStream(stdout) << "Honest initiator: " << ip << " " << port.toInt() << "\n";
 
         int sizeOfPlainText = message.size();
         unsigned char* plainText = (unsigned char *) malloc(sizeOfPlainText);
@@ -201,11 +198,10 @@ int main(int argc, char* argv[])
             plainText[i] = data[i].toLatin1();
         }
 
-        double duration = 0;
-        std::clock_t start = std::clock();
+        auto wcts = std::chrono::system_clock::now();
         client->doConnect(ip, port.toInt(), environment->get_enc_mode(), plainText, sizeOfPlainText, NULL, 0);
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout<< "Encryption Time : " << duration <<'\n';
+        std::chrono::duration<double> wctduration = (std::chrono::system_clock::now() - wcts);
+        std::cout << "Finished in " << wctduration.count() << " seconds [Wall Clock]" << std::endl;
 
         // free memory 
         free(plainText);

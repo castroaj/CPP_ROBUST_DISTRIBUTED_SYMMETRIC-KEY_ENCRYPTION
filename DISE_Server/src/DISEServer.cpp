@@ -74,6 +74,8 @@ void DISEServer::readSocket()
             handleHonestInitiator(socket);
             break;
     }
+
+    QTextStream(stdout) << "\n";
 }
 
 void DISEServer::discardSocket()
@@ -311,13 +313,6 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     // hash (m||p) to obtain a
     cryptoHash(mess_cat_p, sizeOfMessage + sizeof(long), a_cat_j);
 
-    // validate that the given a is the same as the new a
-    std::cout << "og a" << std::endl;
-    for (int i = 0; i < A_BYTE_SIZE; i++) {
-        std::cout << a_cat_j[i] << " ";
-    }
-    std::cout << std::endl;
-
     // Concat a with j the machine number to get (a||j)
     int j = environment->get_machine_num();
     memcpy(a_cat_j + A_BYTE_SIZE, (void *) &j, sizeof(int));
@@ -368,19 +363,24 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     }
 
     // Join Threads
-    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    if (debug)
+    {
+        QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    }
     for(auto& t: threadVector)
     {
         t.join();
     }
 
-    QTextStream(stdout) << "Threads Joined" << "\n";
+    QTextStream(stdout) << "Threads Joined caculating final results" << "\n";
     // Free memory
     threadVector.clear();
 
-    QTextStream(stdout) << "Partial results" << "\n";
-    QTextStream(stdout) << "Size " << partialResultsMap->size() << "\n";
-    QTextStream(stdout) << "Robust Flag " << robustFlag << "\n";
+    if (debug)
+    {
+        QTextStream(stdout) << "Partial results, Size " << partialResultsMap->size() << "\n";
+        QTextStream(stdout) << "Robust Flag " << robustFlag << "\n";
+    }
 
     // block to write data to
     QByteArray block;
@@ -439,6 +439,7 @@ void DISEServer::handleEncryptionRequest(QTcpSocket* socket, unsigned char* mess
     }
     else
     {
+        std::cout << "Robust Flag triggered returning failure" << std::endl;
         // Write out compromised server message
         out << robustFlag;
         socket->write(block);
@@ -502,7 +503,10 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     }
 
     // Join Threads
-    QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    if (debug)
+    {
+        QTextStream(stdout) << "Honest Initiator Joining Threads" << "\n";
+    }
     for(auto& t: threadVector)
     {
         t.join();
@@ -522,6 +526,7 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
     {
         // Early termination there was a redundancy issue
         // Write out compromised server message
+        std::cout << "Robust Flag triggered returning failure" << std::endl;
         out << robustFlag;
         socket->write(block);
         socket->flush();
@@ -615,16 +620,14 @@ void DISEServer::handleDecryptionRequest(QTcpSocket* socket, unsigned char* ciph
 }
 
 void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToUse, unsigned char* a_cat_j, QMap<int, unsigned char*>* partialResults, bool* robustFlag)
-{
-    QTextStream(stdout) << "thread going" << "\n";
-    
+{    
     // Connect to partipant server
     QTcpSocket *socket = new QTcpSocket();
     socket->connectToHost(ip, port);
 
     if(socket->waitForConnected(3000))
     {
-        QTextStream(stdout) << "Thread Connected \n";
+        QTextStream(stdout) << "Connected to Participant " << ip << " " << port << "\n";
 
         socket->write("2"); // Participant 
 
@@ -679,7 +682,10 @@ void DISEServer::honestInitiatorThread(QString ip, int port, QList<int>* keysToU
             socket->waitForBytesWritten(1000);
         }
 
-        QTextStream(stdout) << "Wrote: " << QString::number(bytesWritten) + " to Participant Server" << "\n";
+        if (debug)
+        {
+            QTextStream(stdout) << "Wrote: " << QString::number(bytesWritten) + " to Participant Server" << "\n";
+        }
 
         ///////////////////////////////////////////////////////////////////
 

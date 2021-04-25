@@ -10,6 +10,9 @@
     #include <inttypes.h>
     #include <openssl/rand.h>
     #include "Qt.h"
+    #include <cstdio>
+    #include <ctime>
+    #include <chrono>
     #define ENCRYPTION 0
     #define DECRYPTION 1
 #endif
