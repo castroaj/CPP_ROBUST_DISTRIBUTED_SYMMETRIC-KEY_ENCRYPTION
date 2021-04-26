@@ -3,8 +3,6 @@
 KeyGenerator::KeyGenerator(unsigned int dist_mode)
 {
     all_key_list = new QList<unsigned char*>();
-    omega_table = new QMap<QString, QList<int>>();
-    key_table = new QMap<QString, QList<unsigned char*>>();
 
     switch (dist_mode)
     {
@@ -26,7 +24,6 @@ KeyGenerator::KeyGenerator(unsigned int dist_mode)
     omega_matrix = (int*) calloc(n*key_count_per_machine, sizeof(int)); // n x num_seats 
     create_all_key_list();
     generate_omega_matrix();
-    // print_omega_table();
 }
 
 KeyGenerator::~KeyGenerator()
@@ -38,14 +35,6 @@ KeyGenerator::~KeyGenerator()
         delete[] k;
     }
     delete all_key_list;
-
-    // Free memory for omega table
-    omega_table->clear();
-    delete omega_table;
-
-    // Free memory for key table
-    key_table->clear();
-    delete key_table;
 
     free(omega_matrix);
     free(omega_col_idxs);

@@ -3,8 +3,8 @@
  * within the Client Application 
  *******************************************/
 
-#ifndef DEALER_DRIVER_H
-    #define DEALER_DRIVER_H
+#ifndef CLIENT_DRIVER_H
+    #define CLIENT_DRIVER_H
     #include <iostream>
     #include <vector>
     #include <unordered_map>

@@ -50,8 +50,8 @@
              *           This server will be label the honest initator
              *           throughout the rest of the DISE Transaction
              * 
-             * @param port is the port assoicated with the about IP adress.
-             *             this will be used when creating a socket
+             * @param port is the port assoicated with the above IP adress.
+             *             This will be used when creating a socket
              *             connection with the DISE Server
              * 
              * @param encMode is the flag of which operation will occur
@@ -92,7 +92,6 @@
         private:
             QTcpSocket *socket;  // QT Socket object that is used to
                                  // Connect to a DISE Server
-                                 
             bool debug;          // Debug Flag used for additional output
             int port;            // Port that the socket will connect to
     };      
