@@ -1,3 +1,7 @@
+/*******************************************
+ * List of QT libraries that will be used
+ * within the Client Application 
+ *******************************************/
 #ifndef QT_H
 #define QT_H
     #include <QtCore/QCoreApplication>

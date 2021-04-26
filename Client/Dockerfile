@@ -24,4 +24,4 @@ WORKDIR /usr/src/Client
 RUN cd src && qmake && make
 
 # run the server
-CMD ./src/Client -c ./config/Setup.conf
+CMD ./src/Client -c ./config/3_5_enc.conf
