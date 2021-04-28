@@ -24,4 +24,4 @@ WORKDIR /usr/src/DISE_Server
 RUN cd src && qmake && make
 
 # run the server
-CMD ./src/DiseServer -c ./config/Setup.conf
+CMD ./src/DiseServer -d -c ./config/Setup.conf
