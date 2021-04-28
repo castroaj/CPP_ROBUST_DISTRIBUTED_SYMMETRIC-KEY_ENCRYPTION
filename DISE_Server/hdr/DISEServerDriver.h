@@ -1,3 +1,8 @@
+/*******************************************
+ * List of C++ libraries that will be used
+ * within the Client Application 
+ *******************************************/
+
 #ifndef DISE_SERVER_DRIVER_H
     #define DISE__SERVER_DRIVER_H
     #include <iostream>

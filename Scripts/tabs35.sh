@@ -5,7 +5,7 @@ echo "BUILD"
 ./build
 
 # start servers
-echo "BUILD"
+echo "SPAWN SERVERS"
 gnome-terminal -x bash -c "../DISE_Server/src/DiseServer -d -p 1234; exec bash"
 gnome-terminal -x bash -c "../DISE_Server/src/DiseServer -d -p 1235; exec bash"
 gnome-terminal -x bash -c "../DISE_Server/src/DiseServer -d -p 1236; exec bash"

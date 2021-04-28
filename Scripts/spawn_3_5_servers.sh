@@ -11,6 +11,8 @@ cd ../DISE_Server/src
 ports=("1234" "1235" "1236" "1237" "1238")
 
 echo "LAUNCHING DISE SERVERS"
+echo "======================"
 for i in "${ports[@]}"; do
+     echo "Spawning Server $i"
     ./DiseServer -d -p $i > ../../Scripts/output_3_5/DiseServer/DiseServer_$i &
 done
