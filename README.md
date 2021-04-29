@@ -51,7 +51,7 @@ Professor Wang's paper: [Robust distributed symmetric-key encryption](https://ep
  -d (debug)
  -p *port* (port to connect to)
 
-### Client (Currently Unimplemented)
+### Client
 - **all servers must be running to run the client**
 - cd into client folder
 - qmake
